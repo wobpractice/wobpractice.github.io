@@ -228,8 +228,7 @@ Object.entries(THEMES).forEach(([k,t])=>{
 try{const saved=localStorage.getItem("wb_theme");applyTheme(saved&&THEMES[saved]?saved:"light");}
 catch{applyTheme("light");}
 
-import PROMPTS_LIST from "./prompts.js"
-const PROMPTS_RAW=Object.fromEntries(PROMPTS_LIST.map(([k,v])=>[k,v]));
+import PROMPTS_RAW from "./prompts.js"
 
 const LETTER_WEIGHTS={q:2,j:2,z:1,x:1.5,k:0.6,v:0.35,w:0.25,y:0.05,g:0.05,f:0.05};
 const HYPO_WEIGHTS={"-":1,"'":3};
