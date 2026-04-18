@@ -329,7 +329,7 @@ function resetPrompt(){
   currentPrompt=entry[0];currentDiff=entry[1];
   currentCandidates=sortWords(wordsContaining(currentPrompt),cfg.sort);
   startTime=Date.now();
-  const isSelf=WORD_SET.has(currentPrompt.toLowerCase());
+  const isSelf=WORD_SET.has(currentPrompt.toUpperCase());
   promptWordEl.textContent=currentPrompt;
   promptWordEl.style.color=isSelf?"var(--t-acc)":"var(--t-txt)";
   diffEl.textContent=currentDiff+"%";
@@ -395,7 +395,7 @@ inputEl.addEventListener("keydown",e=>{
   if(!val){solveForPlayer();return;}
 
   const hasPrompt=val.includes(currentPrompt.toLowerCase());
-  const isWord=WORD_SET.has(val);
+  const isWord=WORD_SET.has(val.toUpperCase());
   const isSelf=val===currentPrompt.toLowerCase()&&isWord;
 
   if(!hasPrompt){
