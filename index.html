@@ -188,7 +188,7 @@ kbd{font-family:monospace;font-size:10px;padding:1px 5px;border:0.5px solid var(
 </div>
 </div>
 
-<script>
+<script type="module">
 const THEMES={
   light:{label:"light",bg:"#ffffff",bg2:"#f5f5f4",bg3:"#eeede8",txt:"#1a1a1a",txt2:"#666",txt3:"#aaa",brd:"rgba(0,0,0,0.11)",brd2:"rgba(0,0,0,0.2)",acc:"#1D9E75",acc2:"rgba(29,158,117,0.13)",err:"#E24B4A",fav:"#BA7517",inp:"#ffffff",card:"#ffffff",preview:"#888"},
   dark:{label:"dark",bg:"#1a1a1a",bg2:"#242424",bg3:"#2e2e2e",txt:"#e8e8e8",txt2:"#999",txt3:"#555",brd:"rgba(255,255,255,0.1)",brd2:"rgba(255,255,255,0.18)",acc:"#1D9E75",acc2:"rgba(29,158,117,0.18)",err:"#E24B4A",fav:"#EF9F27",inp:"#242424",card:"#1f1f1f",preview:"#666"},
@@ -228,15 +228,7 @@ Object.entries(THEMES).forEach(([k,t])=>{
 try{const saved=localStorage.getItem("wb_theme");applyTheme(saved&&THEMES[saved]?saved:"light");}
 catch{applyTheme("light");}
 
-const PROMPTS_LIST=[
-  ["at",12],["be",12],["in",12],["on",12],["or",15],["an",15],["ed",18],["er",18],
-  ["it",20],["up",20],["all",28],["are",28],["the",30],["ing",32],["ent",33],["con",35],
-  ["pre",38],["out",40],["est",40],["int",42],["ove",42],["ank",45],
-  ["str",52],["thr",55],["spr",56],["nch",58],["dge",60],
-  ["ight",63],["ound",64],["tion",65],["ness",66],["ring",67],["ling",68],
-  ["atch",70],["each",71],["arch",72],["ench",74],["ough",75],
-  ["inter",78],["under",80],["ought",82],["ength",85],["ounce",87],
-];
+import PROMPTS_LIST from "./prompts.js"
 const PROMPTS_RAW=Object.fromEntries(PROMPTS_LIST.map(([k,v])=>[k,v]));
 
 const LETTER_WEIGHTS={q:2,j:2,z:1,x:1.5,k:0.6,v:0.35,w:0.25,y:0.05,g:0.05,f:0.05};
@@ -244,8 +236,8 @@ const HYPO_WEIGHTS={"-":1,"'":3};
 function rareScore(w){let s=0;for(const c of w)s+=(LETTER_WEIGHTS[c]||0);return s;}
 function hypoScore(w){let s=0;for(const c of w)s+=(HYPO_WEIGHTS[c]||0);return s;}
 
-const WORDS=["abandon","able","about","above","absent","absorb","abuse","access","account","ache","acquire","across","act","active","add","address","adjust","admit","adopt","advance","advice","affect","afford","afraid","after","again","age","agree","ahead","air","album","alert","allow","almost","alone","along","already","also","alter","among","ample","ancient","angle","angry","answer","apart","appeal","apple","apply","arch","area","argue","arise","army","around","arrange","arrive","art","ask","assist","assume","attach","attack","attempt","attend","avoid","away","back","ban","basic","bath","battle","beach","bear","beat","become","begin","behind","belong","benefit","bird","bite","black","blame","blank","blast","blind","block","blood","board","bold","bond","bone","book","boost","born","bound","brace","brain","branch","break","breath","bridge","bring","build","bunch","burst","cable","calm","cancel","carry","cause","chain","chair","change","charm","chase","check","child","choose","clean","clear","climb","clock","close","cloud","coach","coast","coat","cold","color","come","common","complex","core","corner","correct","count","cover","crack","craft","crash","cross","crowd","cure","daily","dance","dark","deal","decay","deep","delay","dense","depth","design","develop","direct","discuss","divide","early","earth","edge","eight","empty","enjoy","enter","equal","error","event","exact","exist","face","fact","fade","fail","faint","faith","fall","false","fancy","fast","feast","feel","field","fight","fill","final","first","flash","flat","float","floor","flow","force","forge","form","found","frame","fresh","front","frost","fruit","game","gate","gather","ghost","giant","give","glade","glare","glass","globe","gloom","glove","goal","grace","grain","grant","grasp","great","green","grind","group","grow","guard","guide","habit","hand","happy","harsh","haven","heal","health","heart","heavy","help","high","hill","hold","holly","home","honey","hope","horse","house","human","ideal","image","impact","imply","index","inner","input","issue","join","joint","judge","jump","keen","kind","knock","know","label","large","laser","latch","later","layer","learn","least","leave","level","light","limit","line","live","local","logic","long","look","loose","love","lower","lucky","magic","major","maker","march","match","mayor","media","mercy","mind","miss","model","money","month","mother","mount","music","name","narrow","nerve","never","night","noble","noise","north","object","often","open","orbit","order","other","outer","paint","panel","panic","paper","party","patch","pause","peace","pearl","people","plan","plate","play","point","power","press","price","pride","print","prize","probe","proud","pull","pulse","push","quest","quick","quiet","radar","range","rapid","reach","realm","rebel","refer","relax","reply","road","round","royal","saint","salad","sauce","scale","scope","scout","sense","shade","shape","share","shift","shine","short","shout","silly","skill","skin","sleep","slice","slide","slow","small","smart","smile","smoke","solve","sound","south","space","speak","spend","spine","split","sport","spread","stand","start","stash","stone","storm","story","straight","strange","streak","street","strike","string","strong","style","surge","swift","swing","table","taste","teach","tense","thick","third","thorn","those","tight","timber","torch","total","touch","tower","trace","trade","train","trust","truth","twist","under","unify","union","until","upper","upset","urban","value","vapor","vault","verse","video","vigor","vivid","watch","water","weave","wedge","wield","witch","word","world","worry","worth","young","youth"];
-const WORD_SET=new Set(WORDS);
+import WORDS from "./words.js"
+const WORD_SET = new Set(WORDS);
 
 function sortWords(arr,type){
   const a=[...arr],s=type||"random";
