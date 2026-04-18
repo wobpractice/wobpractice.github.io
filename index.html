@@ -229,6 +229,7 @@ try{const saved=localStorage.getItem("wb_theme");applyTheme(saved&&THEMES[saved]
 catch{applyTheme("light");}
 
 import PROMPTS_RAW from "./prompts.js"
+const PROMPTS_LIST = Object.entries(PROMPTS_RAW);
 
 const LETTER_WEIGHTS={q:2,j:2,z:1,x:1.5,k:0.6,v:0.35,w:0.25,y:0.05,g:0.05,f:0.05};
 const HYPO_WEIGHTS={"-":1,"'":3};
