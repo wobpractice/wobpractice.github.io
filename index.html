@@ -379,10 +379,11 @@ function updatePreview(text){
   }
 }
 
+let solveDebounced = false
 const ALLOWED=/[^a-zA-Z\-']/g;
 inputEl.addEventListener("input",()=>{
   const raw=inputEl.value,last=raw.slice(-1);
-  if(last==="^"||last==="6"){solveForPlayer();return;}
+  if(last==="^"||last==="6"){if(!solveDebounced)solveForPlayer();solveDebounced=true;setTimeout(()=>solveDebounced=false, 300);return;}
   const f=raw.replace(ALLOWED,"");
   if(f!==raw)inputEl.value=f;
   updatePreview(inputEl.value);
@@ -392,7 +393,7 @@ inputEl.addEventListener("input",()=>{
 inputEl.addEventListener("keydown",e=>{
   if(e.key!=="Enter")return;
   const val=inputEl.value.trim().toLowerCase();
-  if(!val){solveForPlayer();return;}
+  if(!val){if(!solveDebounced)solveForPlayer();solveDebounced=true;setTimeout(()=>solveDebounced=false, 300);return;}
 
   const hasPrompt=val.includes(currentPrompt.toLowerCase());
   const isWord=WORD_SET.has(val.toUpperCase());
