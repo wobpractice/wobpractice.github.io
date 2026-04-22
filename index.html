@@ -285,4 +285,355 @@ function loadStats(){try{const d=localStorage.getItem(LS_STATS);return d?JSON.pa
 function saveStats(s){try{localStorage.setItem(LS_STATS,JSON.stringify(s));}catch{}}
 function loadFavs(){try{const d=localStorage.getItem(LS_FAVS);return d?new Set(JSON.parse(d)):new Set();}catch{return new Set();}}
 function saveFavs(f){try{localStorage.setItem(LS_FAVS,JSON.stringify([...f]));}catch{}}
-function loadPriority(){try{const d=localStorage.getItem(LS_PRI);return d?new Set(JSON.parse(d)):new Set();}catch{return new Set();
+function loadPriority(){try{const d=localStorage.getItem(LS_PRI);return d?new Set(JSON.parse(d)):new Set();}catch{return new Set();}}
+function savePriority(p){try{localStorage.setItem(LS_PRI,JSON.stringify([...p]));}catch{}}
+
+let stats=loadStats();
+let favorites=loadFavs();
+let priority=loadPriority();
+let cfg={min:0,max:100,allPrompts:false,sort:"random"};
+let promptList=[],promptIndex=0;
+let currentPrompt="",currentDiff=0,currentCandidates=[];
+let startTime=Date.now(),sessionStart=Date.now();
+let score=0;
+let practiceMode=false;
+let practiceSequential=false;
+let practiceQueue=[];
+
+const promptWordEl=document.getElementById("prompt-word");
+const inputEl=document.getElementById("input-box");
+const timerEl=document.getElementById("timer");
+const diffEl=document.getElementById("difficulty");
+const scoreEl=document.getElementById("score");
+const previewEl=document.getElementById("preview");
+const msgEl=document.getElementById("msg");
+const favBtn=document.getElementById("fav-btn");
+const priBtn=document.getElementById("pri-btn");
+const practiceBadge=document.getElementById("practice-badge");
+
+function updateFavBtn(){
+  const on=favorites.has(currentPrompt);
+  favBtn.className=on?"on":"off";
+  favBtn.title=on?"unfavorite this prompt":"favorite this prompt";
+  const pon=priority.has(currentPrompt);
+  priBtn.className=pon?"on":"off";
+  priBtn.title=pon?"remove priority":"mark as priority";
+  priBtn.style.display=on?"":"none";
+}
+
+favBtn.addEventListener("click",()=>{
+  if(favorites.has(currentPrompt)){favorites.delete(currentPrompt);priority.delete(currentPrompt);savePriority(priority);}
+  else favorites.add(currentPrompt);
+  saveFavs(favorites);
+  updateFavBtn();
+  renderFavs();
+});
+
+priBtn.addEventListener("click",()=>{
+  if(!favorites.has(currentPrompt))return;
+  if(priority.has(currentPrompt))priority.delete(currentPrompt);
+  else priority.add(currentPrompt);
+  savePriority(priority);
+  updateFavBtn();
+  renderFavs();
+});
+
+function generatePromptList(){
+  const valid=PROMPTS_LIST.filter(([k,v])=>v>=cfg.min&&v<=cfg.max);
+  valid.sort((a,b)=>b[1]-a[1]||(a[0].length-b[0].length));
+  promptList=valid;promptIndex=0;
+}
+
+function getNextPrompt(){
+  if(practiceMode){
+    if(!practiceQueue.length){
+      const favArr=[...favorites];
+      if(!favArr.length){endPractice();return PROMPTS_LIST[Math.floor(Math.random()*PROMPTS_LIST.length)];}
+      if(practiceSequential){
+        practiceQueue=[...favArr].sort();
+      } else {
+        const priArr=[...priority].filter(p=>favorites.has(p));
+        const weighted=[...favArr];
+        priArr.forEach(p=>{weighted.push(p);weighted.push(p);});
+        for(let i=weighted.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[weighted[i],weighted[j]]=[weighted[j],weighted[i]];}
+        practiceQueue=[...weighted];
+      }
+    }
+    const key=practiceQueue.shift();
+    const diff=PROMPTS_RAW[key]||PROMPTS_RAW[key.toUpperCase()]||PROMPTS_RAW[key.toLowerCase()]||50;
+    return[key,diff];
+  }
+  const valid=PROMPTS_LIST.filter(([k,v])=>v>=cfg.min&&v<=cfg.max);
+  const pool=valid.length?valid:PROMPTS_LIST;
+  if(cfg.allPrompts){
+    if(promptIndex>=promptList.length)generatePromptList();
+    return promptList[promptIndex++];
+  }
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function resetPrompt(){
+  const entry=getNextPrompt();
+  currentPrompt=entry[0];currentDiff=entry[1];
+  currentCandidates=sortWords(wordsContaining(currentPrompt),cfg.sort);
+  startTime=Date.now();
+  const isSelf=WORD_SET.has(currentPrompt.toUpperCase());
+  promptWordEl.textContent=currentPrompt;
+  promptWordEl.style.color=isSelf?"var(--t-acc)":"var(--t-txt)";
+  diffEl.textContent=currentDiff+"%";
+  inputEl.value="";inputEl.className="ti";
+  previewEl.innerHTML="";msgEl.textContent="";
+  updateFavBtn();
+  inputEl.focus();
+}
+
+function startPractice(sequential=false){
+  if(!favorites.size){document.getElementById("fav-practice-msg").textContent="add some favorites first!";return;}
+  practiceMode=true;
+  practiceSequential=sequential;
+  practiceQueue=[];
+  practiceBadge.textContent=sequential?"⇆ sequential favorites practice":"★ favorites practice mode";
+  practiceBadge.classList.add("show");
+  document.querySelectorAll(".ni").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelector(".ni[data-tab='game']").classList.add("active");
+  document.getElementById("tab-game").classList.add("active");
+  score=0;scoreEl.textContent=0;
+  resetPrompt();
+}
+
+function endPractice(){
+  practiceMode=false;
+  practiceBadge.classList.remove("show");
+}
+
+document.getElementById("fav-practice-btn").addEventListener("click",()=>startPractice(false));
+document.getElementById("fav-practice-seq-btn").addEventListener("click",()=>startPractice(true));
+
+function solveForPlayer(){
+  const pool=sortWords(wordsContaining(currentPrompt),cfg.sort);
+  if(!pool.length){msgEl.textContent="no words found";return;}
+  const w=pool[0];
+  inputEl.value=w;inputEl.classList.add("correct");
+  updatePreview(w);
+}
+
+function updatePreview(text){
+  if(!text){previewEl.innerHTML="";return;}
+  const i=text.toLowerCase().indexOf(currentPrompt.toLowerCase());
+  if(i!==-1){
+    previewEl.innerHTML=hlWord(text,currentPrompt);
+    inputEl.classList.add("correct");inputEl.classList.remove("wrong");
+  }else{
+    previewEl.innerHTML=`<span style="color:var(--t-txt3)">${esc(text.toLowerCase())}</span>`;
+    inputEl.classList.remove("correct");
+  }
+}
+
+let solveDebounced = false
+const ALLOWED=/[^a-zA-Z\-']/g;
+inputEl.addEventListener("input",()=>{
+  const raw=inputEl.value,last=raw.slice(-1);
+  if(last==="^"||last==="6"){if(!solveDebounced)solveForPlayer();solveDebounced=true;setTimeout(()=>solveDebounced=false, 300);return;}
+  const f=raw.replace(ALLOWED,"");
+  if(f!==raw)inputEl.value=f;
+  updatePreview(inputEl.value);
+  msgEl.textContent="";
+});
+
+inputEl.addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;
+  const val=inputEl.value.trim().toLowerCase();
+  if(!val){if(!solveDebounced)solveForPlayer();solveDebounced=true;setTimeout(()=>solveDebounced=false, 300);return;}
+
+  const hasPrompt=val.includes(currentPrompt.toLowerCase());
+  const isWord=WORD_SET.has(val.toUpperCase());
+  const isSelf=val===currentPrompt.toLowerCase()&&isWord;
+
+  if(!hasPrompt){
+    msgEl.textContent=`"${val}" doesn't contain "${currentPrompt}"`;
+    shake();return;
+  }
+  if(!isWord){
+    msgEl.textContent=`"${val}" isn't a valid word`;
+    shake();return;
+  }
+  score++;scoreEl.textContent=score;
+  stats.totalWords++;saveStats(stats);renderStatsQuiet();
+  flashGreen();resetPrompt();
+});
+
+function shake(){
+  inputEl.classList.add("wrong");inputEl.value="";previewEl.innerHTML="";
+  setTimeout(()=>{inputEl.classList.remove("wrong");msgEl.textContent="";},700);
+}
+
+let flashDiv=document.createElement("div");
+flashDiv.style.cssText="position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:999;";
+document.body.appendChild(flashDiv);
+function flashGreen(){
+  flashDiv.style.background="var(--t-acc2)";
+  flashDiv.style.opacity="1";
+  setTimeout(()=>flashDiv.style.opacity="0",220);
+}
+
+setInterval(()=>{
+  timerEl.textContent=Math.floor((Date.now()-startTime)/1000)+"s";
+},500);
+
+setInterval(()=>{
+  const base=loadStats().totalSeconds;
+  const sess=Math.floor((Date.now()-sessionStart)/1000);
+  document.getElementById("stat-time").textContent=formatTime(base+sess);
+},1000);
+
+function formatTime(s){
+  if(s<60)return s+"s";
+  if(s<3600)return Math.floor(s/60)+"m "+Math.floor(s%60)+"s";
+  return Math.floor(s/3600)+"h "+Math.floor((s%3600)/60)+"m";
+}
+
+function renderStats(){
+  const base=loadStats();
+  document.getElementById("stat-words").textContent=base.totalWords;
+  document.getElementById("stat-time").textContent=formatTime(base.totalSeconds+Math.floor((Date.now()-sessionStart)/1000));
+}
+function renderStatsQuiet(){document.getElementById("stat-words").textContent=loadStats().totalWords;}
+
+function renderFavs(){
+  const el=document.getElementById("fav-list");
+  const priEl=document.getElementById("pri-list");
+  if(!favorites.size){
+    el.innerHTML='<span style="font-size:13px;color:var(--t-txt3);">star a prompt during the game to save it here</span>';
+    priEl.innerHTML='<span style="font-size:13px;color:var(--t-txt3);">use the ✦ button on a favorited prompt to mark it as priority</span>';
+    return;
+  }
+  el.innerHTML="";
+  [...favorites].sort().forEach(p=>{
+    const isPri=priority.has(p);
+    const pill=document.createElement("div");
+    pill.className=isPri?"pri-pill":"fav-pill";
+    pill.innerHTML=`${isPri?"✦ ":""}${esc(p)}<span class="fav-rm">✕</span>`;
+    pill.addEventListener("click",()=>{favorites.delete(p);priority.delete(p);saveFavs(favorites);savePriority(priority);updateFavBtn();renderFavs();});
+    el.appendChild(pill);
+  });
+  priEl.innerHTML="";
+  const priItems=[...priority].filter(p=>favorites.has(p)).sort();
+  if(!priItems.length){
+    priEl.innerHTML='<span style="font-size:13px;color:var(--t-txt3);">no priority prompts yet</span>';
+    return;
+  }
+  priItems.forEach(p=>{
+    const pill=document.createElement("div");
+    pill.className="pri-pill";
+    pill.innerHTML=`✦ ${esc(p)}<span class="fav-rm">✕</span>`;
+    pill.addEventListener("click",()=>{priority.delete(p);savePriority(priority);updateFavBtn();renderFavs();});
+    priEl.appendChild(pill);
+  });
+}
+
+document.getElementById("fav-export").addEventListener("click",()=>{
+  const blob=new Blob([JSON.stringify({favorites:[...favorites],priority:[...priority]},null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="wordbomb_favorites.json";a.click();
+  tmp("fav-io-msg","exported!");
+});
+document.getElementById("fav-import-btn").addEventListener("click",()=>document.getElementById("fav-import-file").click());
+document.getElementById("fav-import-file").addEventListener("change",e=>{
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.favorites&&Array.isArray(d.favorites)){d.favorites.forEach(p=>favorites.add(p));saveFavs(favorites);}if(d.priority&&Array.isArray(d.priority)){d.priority.forEach(p=>priority.add(p));savePriority(priority);}renderFavs();updateFavBtn();tmp("fav-io-msg","imported!");}catch{tmp("fav-io-msg","invalid file");}};
+  r.readAsText(file);e.target.value="";
+});
+
+document.getElementById("stats-export").addEventListener("click",()=>{
+  const base=loadStats();
+  const out={totalWords:base.totalWords,totalSeconds:base.totalSeconds+Math.floor((Date.now()-sessionStart)/1000)};
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="wordbomb_stats.json";a.click();
+  tmp("stats-io-msg","exported!");
+});
+document.getElementById("stats-import-btn").addEventListener("click",()=>document.getElementById("stats-import-file").click());
+document.getElementById("stats-import-file").addEventListener("change",e=>{
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(typeof d.totalWords==="number")stats.totalWords=d.totalWords;if(typeof d.totalSeconds==="number")stats.totalSeconds=d.totalSeconds;sessionStart=Date.now();saveStats(stats);renderStats();tmp("stats-io-msg","restored!");}catch{tmp("stats-io-msg","invalid file");}};
+  r.readAsText(file);e.target.value="";
+});
+document.getElementById("stats-reset").addEventListener("click",()=>{
+  if(!confirm("reset all stats?"))return;
+  stats={totalWords:0,totalSeconds:0};sessionStart=Date.now();saveStats(stats);renderStats();
+});
+
+function tmp(id,msg,t=2200){const el=document.getElementById(id);el.textContent=msg;setTimeout(()=>el.textContent="",t);}
+
+document.getElementById("cfg-min").addEventListener("blur",()=>{
+  let v=parseInt(document.getElementById("cfg-min").value);
+  if(isNaN(v)||v<0)v=0;if(v>cfg.max)v=cfg.max;
+  cfg.min=v;document.getElementById("cfg-min").value=v;generatePromptList();
+});
+document.getElementById("cfg-max").addEventListener("blur",()=>{
+  let v=parseInt(document.getElementById("cfg-max").value);
+  if(isNaN(v)||v>100)v=100;if(v<cfg.min)v=cfg.min;
+  cfg.max=v;document.getElementById("cfg-max").value=v;generatePromptList();
+});
+["cfg-min","cfg-max"].forEach(id=>document.getElementById(id).addEventListener("keydown",e=>{if(e.key==="Enter")e.target.blur();}));
+document.getElementById("cfg-allprompts").addEventListener("change",e=>{cfg.allPrompts=e.target.checked;if(cfg.allPrompts)generatePromptList();});
+document.getElementById("cfg-sort").addEventListener("change",e=>{cfg.sort=e.target.value;});
+
+const lookupInp=document.getElementById("lookup-inp");
+lookupInp.addEventListener("input",()=>{lookupInp.value=lookupInp.value.replace(/[^a-zA-Z]/g,"").slice(0,5).toUpperCase();});
+function doLookup(){
+  const raw=lookupInp.value;if(!raw)return;
+  const p=raw.toLowerCase();
+  const solves=sortWords(wordsContaining(p),cfg.sort);
+  const rate=PROMPTS_RAW[raw]!==undefined?PROMPTS_RAW[raw]:PROMPTS_RAW[p]!==undefined?PROMPTS_RAW[p]:undefined;
+  const rateStr=rate!==undefined?rate+"%":"?";
+  document.getElementById("lookup-res").innerHTML=`Solve Rate = <b>${rateStr}</b>, Sub = <b>${solves.length}</b>`;
+  const wl=document.getElementById("word-list");wl.innerHTML="";
+  solves.slice(0,222).forEach(w=>{
+    const pill=document.createElement("div");pill.className="wpill";pill.innerHTML=hlWord(w,p);wl.appendChild(pill);
+  });
+}
+document.getElementById("lookup-btn").addEventListener("click",doLookup);
+lookupInp.addEventListener("keydown",e=>{if(e.key==="Enter")doLookup();});
+
+const bdInp=document.getElementById("word-breakdown-inp");
+bdInp.addEventListener("input",()=>{bdInp.value=bdInp.value.replace(/[^a-zA-Z\-']/g,"").toUpperCase();});
+function doBreakdown(){
+  const word=bdInp.value.toLowerCase();if(!word)return;
+  const container=document.getElementById("breakdown-list");container.innerHTML="";
+  const matches=[];
+  PROMPTS_LIST.forEach(([key,rate])=>{
+    if(word.includes(key.toLowerCase())){matches.push([key,rate]);}
+  });
+  matches.sort((a,b)=>a[1]-b[1]);
+  if(!matches.length){container.innerHTML='<span style="font-size:13px;color:var(--t-txt3);">no known prompts found in this word</span>';return;}
+  matches.forEach(([key,rate])=>{
+    const pill=document.createElement("div");
+    pill.className="wpill";
+    pill.style.cssText="display:flex;align-items:center;gap:6px;";
+    pill.innerHTML=hlWord(word,key)+`<span style="font-size:10px;color:var(--t-txt3);border-left:0.5px solid var(--t-brd);padding-left:6px;">${rate.toFixed(1)}%</span>`;
+    container.appendChild(pill);
+  });
+}
+document.getElementById("breakdown-btn").addEventListener("click",doBreakdown);
+bdInp.addEventListener("keydown",e=>{if(e.key==="Enter")doBreakdown();});
+
+document.querySelectorAll(".ni").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".ni").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+    if(btn.dataset.tab==="game")inputEl.focus();
+    if(btn.dataset.tab==="stats")renderStats();
+    if(btn.dataset.tab==="favorites")renderFavs();
+  });
+});
+document.getElementById("stoggle").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
+
+generatePromptList();renderStats();renderFavs();resetPrompt();
+</script>
+</div>
+</body>
+</html>
