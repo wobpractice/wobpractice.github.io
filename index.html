@@ -42,10 +42,13 @@ kbd{font-family:monospace;font-size:10px;padding:1px 5px;border:0.5px solid var(
 .sc-l{font-size:11px;color:var(--t-txt3);margin-bottom:2px;}
 .sc-v{font-size:18px;font-weight:500;color:var(--t-txt);}
 #prompt-area{text-align:center;padding:1.4rem 1.4rem 1.2rem;border:0.5px solid var(--t-brd);border-radius:12px;background:var(--t-card-bg);margin-bottom:0.85rem;position:relative;}
-#fav-btn{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;transition:transform 0.15s;}
-#fav-btn:hover{transform:scale(1.2);}
+#star-btns{position:absolute;top:8px;right:8px;display:flex;gap:2px;}
+#fav-btn,#pri-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;transition:transform 0.15s;}
+#fav-btn:hover,#pri-btn:hover{transform:scale(1.2);}
 #fav-btn.off{color:var(--t-txt3);}
 #fav-btn.on{color:var(--t-fav);}
+#pri-btn.off{color:var(--t-txt3);}
+#pri-btn.on{color:#D4537E;}
 #prompt-label{font-size:11px;color:var(--t-txt3);margin-bottom:5px;letter-spacing:0.05em;}
 #prompt-word{font-size:42px;font-weight:500;letter-spacing:0.12em;font-family:monospace;transition:color 0.2s;}
 #preview{font-size:16px;text-align:center;min-height:24px;margin-bottom:0.7rem;font-family:monospace;letter-spacing:0.04em;color:var(--t-txt3);}
@@ -81,7 +84,13 @@ kbd{font-family:monospace;font-size:10px;padding:1px 5px;border:0.5px solid var(
 #fav-list{display:flex;flex-wrap:wrap;gap:6px;}
 .fav-pill{font-size:13px;font-family:monospace;padding:3px 10px;border-radius:20px;background:rgba(186,117,23,0.1);color:#854F0B;border:0.5px solid rgba(186,117,23,0.3);cursor:pointer;display:flex;align-items:center;gap:5px;}
 .fav-pill:hover{background:rgba(186,117,23,0.2);}
+.pri-pill{font-size:13px;font-family:monospace;padding:3px 10px;border-radius:20px;background:rgba(212,83,126,0.1);color:#72243E;border:0.5px solid rgba(212,83,126,0.3);cursor:pointer;display:flex;align-items:center;gap:5px;}
+.pri-pill:hover{background:rgba(212,83,126,0.2);}
 .fav-rm{font-size:10px;opacity:0.5;}
+#word-breakdown-row{display:flex;gap:8px;margin-bottom:0.85rem;margin-top:1rem;}
+#word-breakdown-inp{flex:1;font-size:15px;padding:0.55rem 1rem;border-radius:8px;border:0.5px solid var(--t-brd2);background:var(--t-inp-bg);color:var(--t-txt);font-family:monospace;outline:none;text-align:center;letter-spacing:0.05em;}
+#word-breakdown-inp:focus{border-color:var(--t-acc);}
+#breakdown-list{display:flex;flex-wrap:wrap;gap:5px;}
 </style>
 </head>
 
@@ -105,7 +114,10 @@ kbd{font-family:monospace;font-size:10px;padding:1px 5px;border:0.5px solid var(
     </div>
     <div id="practice-badge">&#9733; favorites practice mode</div>
     <div id="prompt-area">
-      <button id="fav-btn" class="off" title="favorite">&#9733;</button>
+      <div id="star-btns">
+        <button id="fav-btn" class="off" title="favorite">&#9733;</button>
+        <button id="pri-btn" class="off" title="mark as priority">&#10022;</button>
+      </div>
       <div id="prompt-label">find a word containing</div>
       <div id="prompt-word">...</div>
     </div>
@@ -122,6 +134,12 @@ kbd{font-family:monospace;font-size:10px;padding:1px 5px;border:0.5px solid var(
     </div>
     <div id="lookup-res"></div>
     <div id="word-list"></div>
+    <div class="slab" style="margin-top:1.1rem;">word → prompts breakdown</div>
+    <div id="word-breakdown-row">
+      <input id="word-breakdown-inp" type="text" placeholder="STREET" autocomplete="off" autocorrect="off" spellcheck="false" />
+      <button class="btn" id="breakdown-btn">check</button>
+    </div>
+    <div id="breakdown-list"></div>
   </div>
 
   <div class="tab" id="tab-config">
@@ -158,8 +176,13 @@ kbd{font-family:monospace;font-size:10px;padding:1px 5px;border:0.5px solid var(
     <div class="slab">favorited prompts</div>
     <div id="fav-list"><span style="font-size:13px;color:var(--t-txt3);">star a prompt during the game to save it here</span></div>
     <div class="slab" style="margin-top:1.25rem;">practice</div>
-    <button class="btn acc" id="fav-practice-btn">practice favorites</button>
+    <div class="io-row">
+      <button class="btn acc" id="fav-practice-btn">&#9733; practice random</button>
+      <button class="btn acc" id="fav-practice-seq-btn">&#8652; practice sequential</button>
+    </div>
     <div id="fav-practice-msg" style="font-size:12px;color:var(--t-txt3);margin-top:6px;"></div>
+    <div class="slab" style="margin-top:1.25rem;">priority prompts &#10022;</div>
+    <div id="pri-list"><span style="font-size:13px;color:var(--t-txt3);">use the ✦ button on a favorited prompt to mark it as priority</span></div>
     <div class="slab" style="margin-top:1.25rem;">export / import</div>
     <div class="io-row">
       <button class="btn" id="fav-export">export favorites</button>
@@ -257,289 +280,9 @@ function hlWord(word,prompt){
   return esc(word.slice(0,i))+`<span style="color:var(--t-acc);font-weight:500">${esc(word.slice(i,i+p.length))}</span>`+esc(word.slice(i+p.length));
 }
 
-const LS_STATS="wb_stats",LS_FAVS="wb_favs";
+const LS_STATS="wb_stats",LS_FAVS="wb_favs",LS_PRI="wb_priority";
 function loadStats(){try{const d=localStorage.getItem(LS_STATS);return d?JSON.parse(d):{totalWords:0,totalSeconds:0};}catch{return{totalWords:0,totalSeconds:0};}}
 function saveStats(s){try{localStorage.setItem(LS_STATS,JSON.stringify(s));}catch{}}
 function loadFavs(){try{const d=localStorage.getItem(LS_FAVS);return d?new Set(JSON.parse(d)):new Set();}catch{return new Set();}}
 function saveFavs(f){try{localStorage.setItem(LS_FAVS,JSON.stringify([...f]));}catch{}}
-
-let stats=loadStats();
-let favorites=loadFavs();
-let cfg={min:0,max:100,allPrompts:false,sort:"random"};
-let promptList=[],promptIndex=0;
-let currentPrompt="",currentDiff=0,currentCandidates=[];
-let startTime=Date.now(),sessionStart=Date.now();
-let score=0;
-let practiceMode=false;
-let practiceQueue=[];
-
-const promptWordEl=document.getElementById("prompt-word");
-const inputEl=document.getElementById("input-box");
-const timerEl=document.getElementById("timer");
-const diffEl=document.getElementById("difficulty");
-const scoreEl=document.getElementById("score");
-const previewEl=document.getElementById("preview");
-const msgEl=document.getElementById("msg");
-const favBtn=document.getElementById("fav-btn");
-const practiceBadge=document.getElementById("practice-badge");
-
-function updateFavBtn(){
-  const on=favorites.has(currentPrompt);
-  favBtn.className=on?"on":"off";
-  favBtn.title=on?"unfavorite this prompt":"favorite this prompt";
-}
-
-favBtn.addEventListener("click",()=>{
-  if(favorites.has(currentPrompt))favorites.delete(currentPrompt);
-  else favorites.add(currentPrompt);
-  saveFavs(favorites);
-  updateFavBtn();
-  renderFavs();
-});
-
-function generatePromptList(){
-  const valid=PROMPTS_LIST.filter(([k,v])=>v>=cfg.min&&v<=cfg.max);
-  valid.sort((a,b)=>b[1]-a[1]||(a[0].length-b[0].length));
-  promptList=valid;promptIndex=0;
-}
-
-function getNextPrompt(){
-  if(practiceMode){
-    if(!practiceQueue.length){
-      const arr=[...favorites];
-      if(!arr.length){endPractice();return PROMPTS_LIST[Math.floor(Math.random()*PROMPTS_LIST.length)];}
-      for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
-      practiceQueue=[...arr];
-    }
-    const key=practiceQueue.shift();
-    const diff=PROMPTS_RAW[key]||50;
-    return[key,diff];
-  }
-  const valid=PROMPTS_LIST.filter(([k,v])=>v>=cfg.min&&v<=cfg.max);
-  const pool=valid.length?valid:PROMPTS_LIST;
-  if(cfg.allPrompts){
-    if(promptIndex>=promptList.length)generatePromptList();
-    return promptList[promptIndex++];
-  }
-  return pool[Math.floor(Math.random()*pool.length)];
-}
-
-function resetPrompt(){
-  const entry=getNextPrompt();
-  currentPrompt=entry[0];currentDiff=entry[1];
-  currentCandidates=sortWords(wordsContaining(currentPrompt),cfg.sort);
-  startTime=Date.now();
-  const isSelf=WORD_SET.has(currentPrompt.toUpperCase());
-  promptWordEl.textContent=currentPrompt;
-  promptWordEl.style.color=isSelf?"var(--t-acc)":"var(--t-txt)";
-  diffEl.textContent=currentDiff+"%";
-  inputEl.value="";inputEl.className="ti";
-  previewEl.innerHTML="";msgEl.textContent="";
-  updateFavBtn();
-  inputEl.focus();
-}
-
-function startPractice(){
-  if(!favorites.size){document.getElementById("fav-practice-msg").textContent="add some favorites first!";return;}
-  practiceMode=true;
-  practiceQueue=[];
-  practiceBadge.classList.add("show");
-  document.querySelectorAll(".ni").forEach(b=>b.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.querySelector(".ni[data-tab='game']").classList.add("active");
-  document.getElementById("tab-game").classList.add("active");
-  score=0;scoreEl.textContent=0;
-  resetPrompt();
-}
-
-function endPractice(){
-  practiceMode=false;
-  practiceBadge.classList.remove("show");
-}
-
-document.getElementById("fav-practice-btn").addEventListener("click",startPractice);
-
-function solveForPlayer(){
-  const pool=sortWords(wordsContaining(currentPrompt),cfg.sort);
-  if(!pool.length){msgEl.textContent="no words found";return;}
-  const w=pool[0];
-  inputEl.value=w;inputEl.classList.add("correct");
-  updatePreview(w);
-}
-
-function updatePreview(text){
-  if(!text){previewEl.innerHTML="";return;}
-  const i=text.toLowerCase().indexOf(currentPrompt.toLowerCase());
-  if(i!==-1){
-    previewEl.innerHTML=hlWord(text,currentPrompt);
-    inputEl.classList.add("correct");inputEl.classList.remove("wrong");
-  }else{
-    previewEl.innerHTML=`<span style="color:var(--t-txt3)">${esc(text.toLowerCase())}</span>`;
-    inputEl.classList.remove("correct");
-  }
-}
-
-let solveDebounced = false
-const ALLOWED=/[^a-zA-Z\-']/g;
-inputEl.addEventListener("input",()=>{
-  const raw=inputEl.value,last=raw.slice(-1);
-  if(last==="^"||last==="6"){if(!solveDebounced)solveForPlayer();solveDebounced=true;setTimeout(()=>solveDebounced=false, 300);return;}
-  const f=raw.replace(ALLOWED,"");
-  if(f!==raw)inputEl.value=f;
-  updatePreview(inputEl.value);
-  msgEl.textContent="";
-});
-
-inputEl.addEventListener("keydown",e=>{
-  if(e.key!=="Enter")return;
-  const val=inputEl.value.trim().toLowerCase();
-  if(!val){if(!solveDebounced)solveForPlayer();solveDebounced=true;setTimeout(()=>solveDebounced=false, 300);return;}
-
-  const hasPrompt=val.includes(currentPrompt.toLowerCase());
-  const isWord=WORD_SET.has(val.toUpperCase());
-  const isSelf=val===currentPrompt.toLowerCase()&&isWord;
-
-  if(!hasPrompt){
-    msgEl.textContent=`"${val}" doesn't contain "${currentPrompt}"`;
-    shake();return;
-  }
-  if(!isWord){
-    msgEl.textContent=`"${val}" isn't a valid word`;
-    shake();return;
-  }
-  score++;scoreEl.textContent=score;
-  stats.totalWords++;saveStats(stats);renderStatsQuiet();
-  flashGreen();resetPrompt();
-});
-
-function shake(){
-  inputEl.classList.add("wrong");inputEl.value="";previewEl.innerHTML="";
-  setTimeout(()=>{inputEl.classList.remove("wrong");msgEl.textContent="";},700);
-}
-
-let flashDiv=document.createElement("div");
-flashDiv.style.cssText="position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:999;";
-document.body.appendChild(flashDiv);
-function flashGreen(){
-  flashDiv.style.background="var(--t-acc2)";
-  flashDiv.style.opacity="1";
-  setTimeout(()=>flashDiv.style.opacity="0",220);
-}
-
-setInterval(()=>{
-  timerEl.textContent=Math.floor((Date.now()-startTime)/1000)+"s";
-},500);
-
-setInterval(()=>{
-  const base=loadStats().totalSeconds;
-  const sess=Math.floor((Date.now()-sessionStart)/1000);
-  document.getElementById("stat-time").textContent=formatTime(base+sess);
-},1000);
-
-function formatTime(s){
-  if(s<60)return s+"s";
-  if(s<3600)return Math.floor(s/60)+"m "+Math.floor(s%60)+"s";
-  return Math.floor(s/3600)+"h "+Math.floor((s%3600)/60)+"m";
-}
-
-function renderStats(){
-  const base=loadStats();
-  document.getElementById("stat-words").textContent=base.totalWords;
-  document.getElementById("stat-time").textContent=formatTime(base.totalSeconds+Math.floor((Date.now()-sessionStart)/1000));
-}
-function renderStatsQuiet(){document.getElementById("stat-words").textContent=loadStats().totalWords;}
-
-function renderFavs(){
-  const el=document.getElementById("fav-list");
-  if(!favorites.size){el.innerHTML='<span style="font-size:13px;color:var(--t-txt3);">star a prompt during the game to save it here</span>';return;}
-  el.innerHTML="";
-  [...favorites].sort().forEach(p=>{
-    const pill=document.createElement("div");
-    pill.className="fav-pill";
-    pill.innerHTML=`${esc(p)}<span class="fav-rm">✕</span>`;
-    pill.addEventListener("click",()=>{favorites.delete(p);saveFavs(favorites);updateFavBtn();renderFavs();});
-    el.appendChild(pill);
-  });
-}
-
-document.getElementById("fav-export").addEventListener("click",()=>{
-  const blob=new Blob([JSON.stringify({favorites:[...favorites]},null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="wordbomb_favorites.json";a.click();
-  tmp("fav-io-msg","exported!");
-});
-document.getElementById("fav-import-btn").addEventListener("click",()=>document.getElementById("fav-import-file").click());
-document.getElementById("fav-import-file").addEventListener("change",e=>{
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.favorites&&Array.isArray(d.favorites)){d.favorites.forEach(p=>favorites.add(p));saveFavs(favorites);renderFavs();updateFavBtn();tmp("fav-io-msg","imported "+d.favorites.length+"!");}}catch{tmp("fav-io-msg","invalid file");}};
-  r.readAsText(file);e.target.value="";
-});
-
-document.getElementById("stats-export").addEventListener("click",()=>{
-  const base=loadStats();
-  const out={totalWords:base.totalWords,totalSeconds:base.totalSeconds+Math.floor((Date.now()-sessionStart)/1000)};
-  const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="wordbomb_stats.json";a.click();
-  tmp("stats-io-msg","exported!");
-});
-document.getElementById("stats-import-btn").addEventListener("click",()=>document.getElementById("stats-import-file").click());
-document.getElementById("stats-import-file").addEventListener("change",e=>{
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(typeof d.totalWords==="number")stats.totalWords=d.totalWords;if(typeof d.totalSeconds==="number")stats.totalSeconds=d.totalSeconds;sessionStart=Date.now();saveStats(stats);renderStats();tmp("stats-io-msg","restored!");}catch{tmp("stats-io-msg","invalid file");}};
-  r.readAsText(file);e.target.value="";
-});
-document.getElementById("stats-reset").addEventListener("click",()=>{
-  if(!confirm("reset all stats?"))return;
-  stats={totalWords:0,totalSeconds:0};sessionStart=Date.now();saveStats(stats);renderStats();
-});
-
-function tmp(id,msg,t=2200){const el=document.getElementById(id);el.textContent=msg;setTimeout(()=>el.textContent="",t);}
-
-document.getElementById("cfg-min").addEventListener("blur",()=>{
-  let v=parseInt(document.getElementById("cfg-min").value);
-  if(isNaN(v)||v<0)v=0;if(v>cfg.max)v=cfg.max;
-  cfg.min=v;document.getElementById("cfg-min").value=v;generatePromptList();
-});
-document.getElementById("cfg-max").addEventListener("blur",()=>{
-  let v=parseInt(document.getElementById("cfg-max").value);
-  if(isNaN(v)||v>100)v=100;if(v<cfg.min)v=cfg.min;
-  cfg.max=v;document.getElementById("cfg-max").value=v;generatePromptList();
-});
-["cfg-min","cfg-max"].forEach(id=>document.getElementById(id).addEventListener("keydown",e=>{if(e.key==="Enter")e.target.blur();}));
-document.getElementById("cfg-allprompts").addEventListener("change",e=>{cfg.allPrompts=e.target.checked;if(cfg.allPrompts)generatePromptList();});
-document.getElementById("cfg-sort").addEventListener("change",e=>{cfg.sort=e.target.value;});
-
-const lookupInp=document.getElementById("lookup-inp");
-lookupInp.addEventListener("input",()=>{lookupInp.value=lookupInp.value.replace(/[^a-zA-Z]/g,"").slice(0,5).toUpperCase();});
-function doLookup(){
-  const p=lookupInp.value.toLowerCase();if(!p)return;
-  const solves=sortWords(wordsContaining(p),cfg.sort);
-  const rate=PROMPTS_RAW[p]!==undefined?PROMPTS_RAW[p]+"%":"?";
-  document.getElementById("lookup-res").innerHTML=`Solve Rate = <b>${rate}</b>, Sub = <b>${solves.length}</b>`;
-  const wl=document.getElementById("word-list");wl.innerHTML="";
-  solves.slice(0,222).forEach(w=>{
-    const pill=document.createElement("div");pill.className="wpill";pill.innerHTML=hlWord(w,p);wl.appendChild(pill);
-  });
-}
-document.getElementById("lookup-btn").addEventListener("click",doLookup);
-lookupInp.addEventListener("keydown",e=>{if(e.key==="Enter")doLookup();});
-
-document.querySelectorAll(".ni").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    document.querySelectorAll(".ni").forEach(b=>b.classList.remove("active"));
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
-    if(btn.dataset.tab==="game")inputEl.focus();
-    if(btn.dataset.tab==="stats")renderStats();
-    if(btn.dataset.tab==="favorites")renderFavs();
-  });
-});
-document.getElementById("stoggle").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
-
-generatePromptList();renderStats();renderFavs();resetPrompt();
-</script>
-</div>
-</body>
-</html>
+function loadPriority(){try{const d=localStorage.getItem(LS_PRI);return d?new Set(JSON.parse(d)):new Set();}catch{return new Set();
