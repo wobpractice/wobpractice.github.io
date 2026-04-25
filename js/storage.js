@@ -78,9 +78,9 @@ export function saveActiveWordlist(id) {
 export function loadConfig() {
   try { 
     const d = localStorage.getItem(LS_CONFIG); 
-    return d ? JSON.parse(d) : { min: 0, max: 100, sort: "random", weight2: 0.5, weight3: 0.5, weightsEnabled: true }; 
+    return d ? JSON.parse(d) : { min: 0, max: 100, sort: "random", weight2: 0.5, weight3: 0.5, weightsEnabled: false }; 
   }
-  catch { return { min: 0, max: 100, sort: "random", weight2: 0.5, weight3: 0.5, weightsEnabled: true }; }
+  catch { return { min: 0, max: 100, sort: "random", weight2: 0.5, weight3: 0.5, weightsEnabled: false }; }
 }
 
 export function saveConfig(c) {
