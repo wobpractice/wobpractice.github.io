@@ -80,10 +80,32 @@ WOB Practice Website is a web-based typing trainer that challenges users to type
 ├── css/
 │   └── style.css       # Complete styling with theme system
 ├── js/
-│   ├── main.js         # Core application logic
+│   ├── main.js         # Application orchestrator (290 lines)
 │   ├── storage.js      # Data persistence utilities
 │   ├── themes.js       # Theme management system
-│   └── tutorial.js     # Interactive tutorial system
+│   ├── tutorial.js     # Interactive tutorial system
+│   ├── game-core.js    # Core game logic
+│   ├── modes.js        # Game mode configuration
+│   ├── prompt-selection.js # Prompt selection logic
+│   ├── regen-system.js # Regen mode functionality
+│   ├── wordlist-manager.js # Wordlist management
+│   ├── state-management.js # Global state tracking
+│   ├── utils/          # Utility functions
+│   │   ├── index.js    # Re-export for easy importing
+│   │   ├── data.js     # Core data and weights
+│   │   ├── text-utils.js # Text processing utilities
+│   │   ├── word-utils.js # Word processing utilities
+│   │   └── popup.js    # Popup system
+│   └── ui-handlers/    # UI event handlers
+│       ├── index.js    # Re-export for easy importing
+│       ├── stats-ui.js # Statistics display
+│       ├── favorites-ui.js # Favorites and star buttons
+│       ├── config-ui.js # Configuration handlers
+│       ├── modes-ui.js # Mode selection handlers
+│       ├── export-import-ui.js # Data export/import
+│       ├── lookup-ui.js # Word lookup and breakdown
+│       ├── sidebar-ui.js # Sidebar navigation
+│       └── struggle-info.js # Struggle data display
 ├── data/
 │   ├── words.js        # Word database (286K words)
 │   ├── prompts.js      # Prompt definitions with difficulties
@@ -120,6 +142,13 @@ WOB Practice Website is a web-based typing trainer that challenges users to type
 - **Virtual Scrolling**: Efficient large list rendering
 - **Debounced Updates**: Optimized input handling
 - **Selective Rendering**: Minimal DOM manipulation
+
+#### Recent Code Optimizations (April 2026)
+- **Granular Modularization**: Split monolithic code into focused modules
+- **Line Count Reduction**: Optimized main.js from 340 to 290 lines (-14.7%)
+- **Improved Maintainability**: Clear separation of concerns for AI development
+- **Enhanced Import System**: Index.js files for clean module importing
+- **Bug Fixes**: Resolved import issues and UI functionality problems
 
 ### Browser Compatibility
 - **Modern Browsers**: Chrome 90+, Firefox 88+, Safari 14+
@@ -237,4 +266,4 @@ WOB Practice Website is a web-based typing trainer that challenges users to type
 
 ---
 
-*Last Updated: 2025*
+*Last Updated: April 25, 2026*
