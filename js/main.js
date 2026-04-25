@@ -61,8 +61,8 @@ let score = 0;
 let currentMode = "normal";
 let practiceQueue = [];
 let autoSolvedThisPrompt = false;
-let wordlists = {};
-let activeWordlistId = null;
+let wordlists = loadWordlists();
+let activeWordlistId = loadActiveWordlist();
 
 // Regen state
 let regenLetters = {};
@@ -122,7 +122,6 @@ function createDefaultWordlists() {
     }
   };
   
-  // Add default wordlists if they don't exist
   let updated = false;
   for (const [key, wordlist] of Object.entries(defaults)) {
     if (!wordlists[key]) {
@@ -223,19 +222,15 @@ function getNextPrompt() {
     return weighted[Math.floor(Math.random()*weighted.length)];
   }
   if (currentMode === "sn") {
-    // SN mode: use pre-generated sub8 prompts, weighted by solution count
     if (SN_PROMPTS.length === 0) {
-      // Fallback to normal mode if no SN prompts available
       const valid = PROMPTS_LIST.filter(([k,v]) => v >= cfg.min && v <= cfg.max);
       const pool  = valid.length ? valid : PROMPTS_LIST;
       return getWeightedRandomPrompt(pool);
     }
     
-    // Weight by solution count (8 solutions more likely than 1 solution)
     const weighted = [];
     SN_PROMPTS.forEach(entry => {
       const [prompt, solveCount] = entry;
-      // Weight based on solve count: 1 solution = 1 copy, 8 solutions = 8 copies
       const copies = solveCount;
       for (let i = 0; i < copies; i++) {
         weighted.push(entry);
@@ -244,7 +239,6 @@ function getNextPrompt() {
     
     return weighted[Math.floor(Math.random() * weighted.length)];
   }
-  // normal - apply length weights for random modes
   const valid = PROMPTS_LIST.filter(([k,v]) => v >= cfg.min && v <= cfg.max);
   const pool  = valid.length ? valid : PROMPTS_LIST;
   
@@ -253,7 +247,6 @@ function getNextPrompt() {
 
 // Helper function for weighted random prompt selection
 function getWeightedRandomPrompt(pool) {
-  // If weights are disabled, return random selection
   if (!cfg.weightsEnabled) {
     return pool[Math.floor(Math.random() * pool.length)];
   }
@@ -269,14 +262,12 @@ function getWeightedRandomPrompt(pool) {
       weight = cfg.weight3 !== undefined ? cfg.weight3 : 0.5;
     }
     
-    // Add the prompt multiple times based on weight
-    const copies = Math.round(weight * 10); // Scale 0.0-1.0 to 0-10 copies
+    const copies = Math.round(weight * 10);
     for (let i = 0; i < copies; i++) {
       weighted.push(entry);
     }
   });
   
-  // If weighted array is empty (all weights were 0), fall back to original pool
   if (weighted.length === 0) {
     return pool[Math.floor(Math.random() * pool.length)];
   }
@@ -304,7 +295,6 @@ function resetPrompt() {
   startTime = Date.now();
   const isSelf = WORD_SET.has(currentPrompt.toUpperCase());
   
-  // Handle Regen Random Letter mode
   if (currentMode === "regen-random") {
     regenRandomLetter = getRandomLetterForPrompt(currentPrompt);
     if (regenRandomLetter) {
@@ -337,7 +327,6 @@ export function activateMode(mode) {
   practiceQueue = [];
   if (mode === "all") generatePromptList();
   
-  // Handle Regen modes
   if (mode === "regen-regular" || mode === "regen-ranked") {
     document.getElementById("regen-bar").style.display = "block";
     regenStartingCount = mode === "regen-ranked" ? 3 : 1;
@@ -355,7 +344,7 @@ export function activateMode(mode) {
   const cardId = { normal:"mode-normal", all:"mode-all", "fav-rand":"mode-fav-rand",
                    "fav-seq":"mode-fav-seq", priority:"mode-priority", struggle:"mode-struggle",
                    "regen-random":"mode-regen-random", "regen-regular":"mode-regen-regular", 
-                   "regen-ranked":"mode-regen-ranked" }[mode];
+                   "regen-ranked":"mode-regen-ranked", sn:"mode-sn" }[mode];
   if (cardId) document.getElementById(cardId)?.classList.add("active-mode");
   switchTab("game");
   currentPrompt = ""; resetPrompt();
@@ -371,6 +360,7 @@ export function switchTab(name) {
   if (name === "stats")     renderStats();
   if (name === "favorites") renderFavs();
   if (name === "modes")     updateStruggleInfo();
+  if (name === "wordlists") renderWordlists();
 }
 
 // ── Star buttons ──────────────────────────────────────────────────────────────
@@ -401,12 +391,10 @@ function solveForPlayer() {
   autoSolvedThisPrompt = true;
   let pool = wordsContaining(currentPrompt);
   
-  // Handle Regen Random Letter mode
   if (currentMode === "regen-random" && regenRandomLetter) {
     pool = pool.filter(w => w.toUpperCase().includes(regenRandomLetter));
   }
   
-  // Prioritize active wordlist if available
   const activeWordlist = getActiveWordlist();
   if (activeWordlist) {
     const wordlistWords = new Set(activeWordlist.words);
@@ -416,33 +404,27 @@ function solveForPlayer() {
     }
   }
   
-  // Apply normal sorting first
   pool = sortWords(pool, cfg.sort);
   
-  // For Regen modes, prioritize words with highest letter counts (applied last)
   if (currentMode.startsWith("regen") && currentMode !== "regen-random") {
-    // Filter out words that don't contain any needed letters
     const filteredPool = pool.filter(word => {
       for (let i = 0; i < word.length; i++) {
         const char = word[i];
         if (char >= 'A' && char <= 'Z' && regenLetters[char] > 0) {
-          return true; // Word has at least one needed letter
+          return true;
         }
       }
-      return false; // No needed letters found
+      return false;
     });
     
-    // Only apply custom scoring if we have words with needed letters
     if (filteredPool.length > 0) {
       let bestWord = filteredPool[0];
       let bestScore = 0;
       
-      // Score all relevant words
       for (let i = 0; i < filteredPool.length; i++) {
         const word = filteredPool[i];
         let score = 0;
         
-        // Count unique letters and cap scoring at remaining counts
         const letterCounts = {};
         for (let j = 0; j < word.length; j++) {
           const char = word[j];
@@ -454,7 +436,6 @@ function solveForPlayer() {
         for (const [char, count] of Object.entries(letterCounts)) {
           const remainingCount = regenLetters[char];
           if (remainingCount > 0) {
-            // Cap the reward at the remaining count for this letter
             const actualCount = Math.min(count, remainingCount);
             score += actualCount * remainingCount * (REGENMODE_WEIGHTS[char] || 1);
           }
@@ -466,7 +447,6 @@ function solveForPlayer() {
         }
       }
       
-      // Move best word to front if it's not already there
       if (bestWord && bestWord !== pool[0]) {
         const bestIndex = pool.indexOf(bestWord);
         if (bestIndex > 0) {
@@ -474,7 +454,6 @@ function solveForPlayer() {
         }
       }
     }
-    // If no words have needed letters, use normal selection (do nothing)
   }
   if (!pool.length) { msgEl.textContent = "no words found"; return; }
   const w = pool[0];
@@ -542,7 +521,6 @@ inputEl.addEventListener("keydown", e => {
   const hasPrompt = val.includes(currentPrompt.toLowerCase());
   const isWord    = WORD_SET.has(val.toUpperCase());
   
-  // Check for Regen Random Letter mode
   if (currentMode === "regen-random" && regenRandomLetter) {
     const hasLetter = val.toUpperCase().includes(regenRandomLetter);
     if (!hasLetter) { 
@@ -554,7 +532,6 @@ inputEl.addEventListener("keydown", e => {
   if (!hasPrompt) { msgEl.textContent = `"${val}" doesn't contain "${currentPrompt}"`; shake(); return; }
   if (!isWord)    { msgEl.textContent = `"${val}" isn't a valid word`; shake(); return; }
   
-  // Handle scoring for Regen modes
   if (currentMode === "regen-regular" || currentMode === "regen-ranked") {
     updateRegenLetters(val);
   } else {
@@ -717,7 +694,6 @@ function openWordlistModal(id, mode) {
   wordsInput.value = wl.words.join("\n");
   wordCount.textContent = wl.words.length;
   
-  // Enable/disable inputs based on mode and if fixed
   titleInput.disabled = wl.fixed && mode === 'details';
   descInput.disabled = wl.fixed && mode === 'details';
   wordsInput.disabled = wl.fixed;
@@ -743,7 +719,7 @@ function processWords(text) {
   return text.split(/[\s\n]+/)
     .map(w => w.trim().toUpperCase())
     .filter(w => w && validateWord(w))
-    .slice(0, 500); // Max 500 words
+    .slice(0, 500);
 }
 
 function saveWordlistFromModal() {
@@ -803,11 +779,9 @@ function updateWeightSliders(changedSlider) {
   let weight3 = parseFloat(slider3.value);
   
   if (changedSlider === '2') {
-    // When 2-letter changes, adjust 3-letter to maintain balance
     weight3 = Math.max(0, Math.min(1, 1 - weight2));
     slider3.value = weight3;
   } else if (changedSlider === '3') {
-    // When 3-letter changes, adjust 2-letter to maintain balance
     weight2 = Math.max(0, Math.min(1, 1 - weight3));
     slider2.value = weight2;
   }
@@ -974,12 +948,9 @@ document.getElementById("new-wordlist-btn").addEventListener("click", () => {
   openWordlistModal(id, 'details');
 });
 
-
 document.getElementById("wordlist-modal-close").addEventListener("click", closeWordlistModal);
 document.getElementById("wordlist-cancel").addEventListener("click", closeWordlistModal);
-
 document.getElementById("wordlist-words").addEventListener("input", updateWordCount);
-
 document.getElementById("wordlist-save").addEventListener("click", saveWordlistFromModal);
 
 document.getElementById("wordlist-import-btn").addEventListener("click", () => {
@@ -995,9 +966,8 @@ document.getElementById("wordlist-import-file").addEventListener("change", e => 
     const importedWords = ev.target.result.split(/[\n\r]+/)
       .map(w => w.trim().toUpperCase())
       .filter(w => w && validateWord(w))
-      .filter(w => !currentWords.has(w)); // Remove duplicates
+      .filter(w => !currentWords.has(w));
     
-    // Check if this is a custom wordlist and enforce 500-word limit
     const wl = wordlists[currentEditingWordlistId];
     let finalWords = [];
     if (wl && !wl.fixed) {
@@ -1021,48 +991,7 @@ document.getElementById("wordlist-import-file").addEventListener("change", e => 
   e.target.value = "";
 });
 
-document.getElementById("wordlist-substring-btn").addEventListener("click", () => {
-  document.getElementById("wordlist-substring-controls").style.display = "block";
-});
-
-document.getElementById("wordlist-substring-cancel").addEventListener("click", () => {
-  document.getElementById("wordlist-substring-controls").style.display = "none";
-  document.getElementById("wordlist-substring-input").value = "";
-});
-
-document.getElementById("wordlist-substring-add").addEventListener("click", () => {
-  const substring = document.getElementById("wordlist-substring-input").value.trim();
-  if (!substring) return;
-  
-  const wordsInput = document.getElementById("wordlist-words");
-  const currentWords = new Set(wordsInput.value.split(/[\s\n]+/).map(w => w.trim()).filter(w => w));
-  const newWords = wordsContaining(substring).filter(w => !currentWords.has(w));
-  
-  // Check if this is a custom wordlist and enforce 500-word limit
-  const wl = wordlists[currentEditingWordlistId];
-  if (wl && !wl.fixed) {
-    const remainingSlots = 500 - currentWords.size;
-    if (remainingSlots <= 0) {
-      CustomAlert("Wordlist already has 500 words (maximum limit).", "Limit Reached");
-      return;
-    }
-    const limitedNewWords = newWords.slice(0, remainingSlots);
-    if (limitedNewWords.length < newWords.length) {
-      CustomAlert(`Only added ${limitedNewWords.length} words due to 500-word limit.`, "Limited");
-    }
-    wordsInput.value = [...currentWords, ...limitedNewWords].join("\n");
-  } else {
-    wordsInput.value = [...currentWords, ...newWords].join("\n");
-  }
-  
-  updateWordCount();
-  
-  document.getElementById("wordlist-substring-controls").style.display = "none";
-  document.getElementById("wordlist-substring-input").value = "";
-});
-
 // ── Utility ───────────────────────────────────────────────────────────────────
-// Custom popup functions
 let popupResolve = null;
 
 function showPopup(title, message, showCancel = false) {
@@ -1153,14 +1082,12 @@ function updateRegenLetters(word) {
     }
   }
   
-  // Decrement counts by 1 for each unique letter used in the word
   for (const letter of uniqueLetters) {
     if (regenLetters[letter] > 0) {
       regenLetters[letter] = Math.max(0, regenLetters[letter] - 1);
     }
   }
   
-  // Check if ALL letters are now at zero
   let allZero = true;
   for (let i = 65; i <= 90; i++) {
     const letter = String.fromCharCode(i);
@@ -1184,13 +1111,11 @@ function getRandomLetterForPrompt(prompt) {
   const promptLetters = new Set(prompt.toUpperCase());
   const availableLetters = [];
   
-  // Get all words containing the prompt ONCE
   const promptWords = wordsContaining(prompt);
   
   for (let i = 65; i <= 90; i++) {
     const letter = String.fromCharCode(i);
     if (!promptLetters.has(letter)) {
-      // Check if there are words containing both prompt and letter
       const wordsWithBoth = promptWords.filter(w => 
         w.toUpperCase().includes(letter)
       );

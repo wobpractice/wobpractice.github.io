@@ -8,6 +8,7 @@
 </head>
 <body>
 
+
 <div id="app">
   <div id="sidebar" class="">
     <button id="stoggle"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect y="2" width="14" height="1.4" rx="0.7" fill="currentColor"/><rect y="6.3" width="14" height="1.4" rx="0.7" fill="currentColor"/><rect y="10.6" width="14" height="1.4" rx="0.7" fill="currentColor"/></svg></button>
@@ -21,8 +22,10 @@
     <div id="sidebar-bottom"><button id="help-btn" title="help / tutorial">?</button></div>
   </div>
 
+
   <div id="content">
 
+    <!-- GAME -->
     <!-- GAME -->
     <div class="tab active" id="tab-game">
       <div id="hud">
@@ -48,6 +51,7 @@
       <div id="hint"><kbd>Enter</kbd> on empty → auto-solve &nbsp;·&nbsp; <kbd>^</kbd> → auto-solve</div>
     </div>
 
+    <!-- MODES -->
     <!-- MODES -->
     <div class="tab" id="tab-modes">
       <div class="slab">select a mode</div>
@@ -105,8 +109,12 @@
       <div style="margin-top:1rem;">
         <button class="btn danger" id="clear-struggle-btn">clear struggle data</button>
       </div>
+      <div style="margin-top:1rem;">
+        <button class="btn danger" id="clear-struggle-btn">clear struggle data</button>
+      </div>
     </div>
 
+    <!-- LOOKUP -->
     <!-- LOOKUP -->
     <div class="tab" id="tab-lookup">
       <div id="lookup-row">
@@ -123,6 +131,7 @@
       <div id="breakdown-list"></div>
     </div>
 
+    <!-- CONFIG -->
     <!-- CONFIG -->
     <div class="tab" id="tab-config">
       <div class="slab">solve rate filter</div>
@@ -145,6 +154,7 @@
       <div class="theme-grid" id="theme-grid"></div>
     </div>
 
+    <!-- FAVORITES -->
     <!-- FAVORITES -->
     <div class="tab" id="tab-favorites">
       <div class="slab">favorited prompts</div>
@@ -176,6 +186,16 @@
     </div>
 
     <!-- STATS -->
+    <!-- WORDLISTS -->
+    <div class="tab" id="tab-wordlists">
+      <div class="slab">word lists</div>
+      <div id="wordlists-grid" class="wordlists-grid"></div>
+      <div style="margin-top:1.25rem;">
+        <button class="btn acc" id="new-wordlist-btn">+ make a new word list</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
     <div class="tab" id="tab-stats">
       <div class="stats-grid">
         <div class="stat-card"><div class="sc-l">total words typed</div><div class="sc-v" id="stat-words">0</div></div>
@@ -195,6 +215,7 @@
   </div>
 </div>
 
+<!-- TUTORIAL OVERLAY — populated by tutorial.js -->
 <!-- TUTORIAL OVERLAY — populated by tutorial.js -->
 <div id="tut-overlay">
   <div id="tut-modal">
