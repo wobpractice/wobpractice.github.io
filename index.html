@@ -1,880 +1,258 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-:root{
---t-bg:#ffffff;--t-bg2:#f5f5f4;--t-bg3:#eeede8;
---t-txt:#1a1a1a;--t-txt2:#666;--t-txt3:#999;
---t-brd:rgba(0,0,0,0.12);--t-brd2:rgba(0,0,0,0.22);
---t-acc:#1D9E75;--t-acc2:rgba(29,158,117,0.13);
---t-err:#E24B4A;--t-fav:#BA7517;
---t-inp-bg:#ffffff;--t-card-bg:#ffffff;
-}
-body{font-family:var(--font-sans,system-ui,sans-serif);background:var(--t-bg);color:var(--t-txt);transition:background 0.2s,color 0.2s;}
-#app{display:flex;min-height:520px;}
-#sidebar{width:44px;background:var(--t-bg2);border-right:0.5px solid var(--t-brd);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;transition:width 0.18s,background 0.2s;overflow:hidden;flex-shrink:0;}
-#sidebar.open{width:148px;}
-#stoggle{width:30px;height:30px;border-radius:8px;border:none;background:transparent;cursor:pointer;color:var(--t-txt2);display:flex;align-items:center;justify-content:center;margin-bottom:6px;flex-shrink:0;}
-#stoggle:hover{background:var(--t-bg3);}
-.ni{width:calc(100% - 8px);height:34px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:9px;padding:0 7px;color:var(--t-txt2);font-size:13px;white-space:nowrap;overflow:hidden;flex-shrink:0;}
-.ni:hover{background:var(--t-bg3);color:var(--t-txt);}
-.ni.active{background:var(--t-card-bg);color:var(--t-txt);font-weight:500;border:0.5px solid var(--t-brd);}
-.ni-icon{width:16px;height:16px;flex-shrink:0;font-size:13px;display:flex;align-items:center;justify-content:center;}
-.ni-label{opacity:0;transition:opacity 0.12s;font-size:13px;}
-#sidebar.open .ni-label{opacity:1;}
-#sidebar-bottom{margin-top:auto;padding-bottom:6px;display:flex;justify-content:center;}
-#help-btn{width:28px;height:28px;border-radius:50%;border:0.5px solid var(--t-brd2);background:transparent;cursor:pointer;color:var(--t-txt2);font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-#help-btn:hover{background:var(--t-bg3);color:var(--t-txt);}
-#content{flex:1;min-width:0;background:var(--t-bg);}
-.tab{display:none;padding:1.25rem;max-width:500px;margin:0 auto;}
-.tab.active{display:block;}
-.slab{font-size:11px;color:var(--t-txt3);letter-spacing:0.04em;margin-bottom:0.5rem;margin-top:1.25rem;}
-.slab:first-child{margin-top:0;}
-.ti{width:100%;font-size:16px;padding:0.6rem 1rem;border-radius:8px;border:0.5px solid var(--t-brd2);background:var(--t-inp-bg);color:var(--t-txt);outline:none;font-family:inherit;}
-.ti:focus{border-color:var(--t-acc);box-shadow:0 0 0 3px var(--t-acc2);}
-.ti.correct{border-color:var(--t-acc);box-shadow:0 0 0 3px var(--t-acc2);}
-.ti.wrong{border-color:var(--t-err);box-shadow:0 0 0 3px rgba(226,75,74,0.12);}
-.btn{padding:0 0.9rem;height:34px;border-radius:8px;border:0.5px solid var(--t-brd2);background:var(--t-card-bg);color:var(--t-txt);cursor:pointer;font-size:13px;white-space:nowrap;}
-.btn:hover{background:var(--t-bg2);}
-.btn.acc{border-color:var(--t-acc);color:var(--t-acc);background:var(--t-acc2);}
-.btn.danger{border-color:var(--t-err);color:var(--t-err);}
-kbd{font-family:monospace;font-size:10px;padding:1px 5px;border:0.5px solid var(--t-brd2);border-radius:4px;color:var(--t-txt2);}
-#hud{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem;}
-.sc{background:var(--t-bg2);border-radius:8px;padding:0.55rem 0.85rem;}
-.sc-l{font-size:11px;color:var(--t-txt3);margin-bottom:2px;}
-.sc-v{font-size:18px;font-weight:500;color:var(--t-txt);}
-#prompt-area{text-align:center;padding:1.4rem 1.4rem 1.2rem;border:0.5px solid var(--t-brd);border-radius:12px;background:var(--t-card-bg);margin-bottom:0.85rem;position:relative;}
-#star-btns{position:absolute;top:8px;right:8px;display:flex;gap:2px;}
-#fav-btn,#pri-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;transition:transform 0.15s;}
-#fav-btn:hover,#pri-btn:hover{transform:scale(1.2);}
-#fav-btn.off{color:var(--t-txt3);}
-#fav-btn.on{color:var(--t-fav);}
-#pri-btn.off{color:var(--t-txt3);}
-#pri-btn.on{color:#D4537E;}
-#prompt-label{font-size:11px;color:var(--t-txt3);margin-bottom:5px;letter-spacing:0.05em;}
-#prompt-word{font-size:42px;font-weight:500;letter-spacing:0.12em;font-family:monospace;transition:color 0.2s;}
-#preview{font-size:16px;text-align:center;min-height:24px;margin-bottom:0.7rem;font-family:monospace;letter-spacing:0.04em;color:var(--t-txt3);}
-#practice-badge{display:none;font-size:11px;color:var(--t-fav);background:rgba(186,117,23,0.12);border:0.5px solid rgba(186,117,23,0.3);border-radius:20px;padding:2px 10px;margin-bottom:6px;text-align:center;}
-#practice-badge.show{display:block;}
-#msg{font-size:12px;color:var(--t-txt2);text-align:center;min-height:18px;margin-top:0.4rem;}
-#hint{font-size:11px;color:var(--t-txt3);text-align:center;margin-top:0.4rem;}
-.cfg-row{display:flex;align-items:center;gap:10px;margin-bottom:0.7rem;}
-.cfg-lbl{font-size:13px;color:var(--t-txt2);width:44px;flex-shrink:0;}
-.cfg-inp{width:68px;font-size:14px;padding:0.35rem 0.6rem;border-radius:8px;border:0.5px solid var(--t-brd2);background:var(--t-inp-bg);color:var(--t-txt);font-family:monospace;outline:none;text-align:center;}
-.cfg-inp:focus{border-color:var(--t-acc);}
-.cfg-note{font-size:11px;color:var(--t-txt3);}
-.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:0.7rem;}
-.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
-.toggle input{opacity:0;width:0;height:0;}
-.tslider{position:absolute;inset:0;border-radius:10px;background:var(--t-brd2);cursor:pointer;transition:background 0.2s;}
-.toggle input:checked+.tslider{background:var(--t-acc);}
-.tslider:before{content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;border-radius:50%;background:white;transition:transform 0.2s;}
-.toggle input:checked+.tslider:before{transform:translateX(16px);}
-.theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:0.5rem;}
-.theme-btn{border-radius:8px;border:1.5px solid transparent;padding:6px 4px;cursor:pointer;font-size:12px;text-align:center;transition:border-color 0.15s;}
-.theme-btn.active{border-color:var(--t-acc);}
-#lookup-row{display:flex;gap:8px;margin-bottom:0.85rem;}
-#lookup-inp{flex:1;font-size:15px;padding:0.55rem 1rem;border-radius:8px;border:0.5px solid var(--t-brd2);background:var(--t-inp-bg);color:var(--t-txt);font-family:monospace;outline:none;text-align:center;letter-spacing:0.1em;text-transform:uppercase;}
-#lookup-inp:focus{border-color:var(--t-acc);}
-#lookup-res{font-size:13px;color:var(--t-txt2);margin-bottom:0.75rem;min-height:18px;}
-#lookup-res b{font-weight:500;color:var(--t-txt);}
-#word-list{display:flex;flex-wrap:wrap;gap:5px;max-height:240px;overflow-y:auto;}
-.wpill{font-size:12px;font-family:monospace;padding:3px 9px;border-radius:20px;background:var(--t-bg2);color:var(--t-txt2);border:0.5px solid var(--t-brd);}
-.bpill{font-size:12px;font-family:monospace;padding:3px 12px;border-radius:20px;background:var(--t-bg2);color:var(--t-txt);border:0.5px solid var(--t-brd);display:flex;align-items:center;gap:8px;}
-.bpill-rate{font-size:10px;color:var(--t-txt3);border-left:0.5px solid var(--t-brd);padding-left:8px;}
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;}
-.stat-card{background:var(--t-bg2);border-radius:8px;padding:0.7rem 0.9rem;}
-.io-row{display:flex;gap:8px;margin-bottom:0.5rem;flex-wrap:wrap;}
-#fav-list{display:flex;flex-wrap:wrap;gap:6px;}
-.fav-pill{font-size:13px;font-family:monospace;padding:3px 10px;border-radius:20px;background:rgba(186,117,23,0.1);color:#854F0B;border:0.5px solid rgba(186,117,23,0.3);cursor:pointer;display:flex;align-items:center;gap:5px;}
-.fav-pill:hover{background:rgba(186,117,23,0.2);}
-.pri-pill{font-size:13px;font-family:monospace;padding:3px 10px;border-radius:20px;background:rgba(212,83,126,0.1);color:#72243E;border:0.5px solid rgba(212,83,126,0.3);cursor:pointer;display:flex;align-items:center;gap:5px;}
-.pri-pill:hover{background:rgba(212,83,126,0.2);}
-.fav-rm{font-size:10px;opacity:0.5;}
-#word-breakdown-row{display:flex;gap:8px;margin-bottom:0.85rem;margin-top:0.5rem;}
-#word-breakdown-inp{flex:1;font-size:15px;padding:0.55rem 1rem;border-radius:8px;border:0.5px solid var(--t-brd2);background:var(--t-inp-bg);color:var(--t-txt);font-family:monospace;outline:none;text-align:center;letter-spacing:0.05em;}
-#word-breakdown-inp:focus{border-color:var(--t-acc);}
-#breakdown-list{display:flex;flex-wrap:wrap;gap:5px;}
-.mode-card{border:0.5px solid var(--t-brd);border-radius:12px;padding:0.9rem 1rem;background:var(--t-card-bg);margin-bottom:0.65rem;cursor:pointer;transition:border-color 0.15s;}
-.mode-card:hover{border-color:var(--t-acc);}
-.mode-card.active-mode{border-color:var(--t-acc);border-width:1.5px;}
-.mode-card.struggle:hover{border-color:var(--t-err);}
-.mode-card.struggle.active-mode{border-color:var(--t-err);border-width:1.5px;}
-.mode-title{font-size:14px;font-weight:500;color:var(--t-txt);margin-bottom:2px;}
-.mode-desc{font-size:12px;color:var(--t-txt2);line-height:1.5;}
-.mode-badge{display:inline-block;font-size:10px;padding:1px 8px;border-radius:20px;margin-bottom:5px;}
-.badge-normal{background:var(--t-acc2);color:var(--t-acc);border:0.5px solid var(--t-acc);}
-.badge-favs{background:rgba(186,117,23,0.12);color:#854F0B;border:0.5px solid rgba(186,117,23,0.4);}
-.badge-priority{background:rgba(212,83,126,0.1);color:#72243E;border:0.5px solid rgba(212,83,126,0.4);}
-.badge-struggle{background:rgba(226,75,74,0.1);color:#A32D2D;border:0.5px solid rgba(226,75,74,0.4);}
-.badge-all{background:rgba(55,138,221,0.1);color:#0C447C;border:0.5px solid rgba(55,138,221,0.3);}
-.struggle-info{font-size:12px;color:var(--t-txt3);margin-top:0.75rem;padding:0.6rem 0.85rem;background:var(--t-bg2);border-radius:8px;line-height:1.6;display:none;}
-.struggle-info.show{display:block;}
-#tut-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;}
-#tut-overlay.show{display:flex;}
-#tut-modal{background:var(--t-card-bg);border:0.5px solid var(--t-brd);border-radius:14px;width:min(680px,96vw);max-height:88vh;display:flex;overflow:hidden;position:relative;}
-#tut-nav{width:150px;flex-shrink:0;border-right:0.5px solid var(--t-brd);background:var(--t-bg2);padding:10px 0;display:flex;flex-direction:column;gap:1px;overflow-y:auto;}
-#tut-nav-title{font-size:10px;color:var(--t-txt3);letter-spacing:0.05em;padding:4px 12px 8px;text-transform:uppercase;}
-.tni{padding:7px 12px;font-size:12px;color:var(--t-txt2);cursor:pointer;border-radius:6px;margin:0 4px;border:none;background:transparent;text-align:left;width:calc(100% - 8px);}
-.tni:hover{background:var(--t-bg3);color:var(--t-txt);}
-.tni.active{background:var(--t-card-bg);color:var(--t-txt);font-weight:500;}
-#tut-body{flex:1;overflow-y:auto;padding:1.5rem 1.5rem 1.5rem 1.4rem;}
-#tut-close{position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;font-size:16px;color:var(--t-txt2);line-height:1;z-index:10;}
-#tut-close:hover{color:var(--t-txt);}
-.tut-page{display:none;}
-.tut-page.active{display:block;}
-.tut-h{font-size:16px;font-weight:500;color:var(--t-txt);margin-bottom:0.75rem;padding-right:24px;}
-.tut-p{font-size:13px;color:var(--t-txt2);line-height:1.7;margin-bottom:0.65rem;}
-.tut-tip{background:var(--t-bg2);border-left:2.5px solid var(--t-acc);border-radius:0 6px 6px 0;padding:0.55rem 0.85rem;font-size:13px;color:var(--t-txt2);line-height:1.6;margin-bottom:0.65rem;}
-.tut-tip b,.tut-p b{color:var(--t-txt);font-weight:500;}
-.tut-tip.warn{border-left-color:var(--t-err);}
-.tut-key{display:inline-block;font-family:monospace;font-size:11px;padding:1px 6px;border:0.5px solid var(--t-brd2);border-radius:4px;background:var(--t-bg3);color:var(--t-txt);}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>wordbomb practice</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
+
 <div id="app">
-<div id="sidebar">
-  <button id="stoggle"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect y="2" width="14" height="1.4" rx="0.7" fill="currentColor"/><rect y="6.3" width="14" height="1.4" rx="0.7" fill="currentColor"/><rect y="10.6" width="14" height="1.4" rx="0.7" fill="currentColor"/></svg></button>
-  <button class="ni active" data-tab="game"><span class="ni-icon">&#9000;</span><span class="ni-label">game</span></button>
-  <button class="ni" data-tab="modes"><span class="ni-icon">&#9654;</span><span class="ni-label">modes</span></button>
-  <button class="ni" data-tab="lookup"><span class="ni-icon">&#128269;</span><span class="ni-label">lookup</span></button>
-  <button class="ni" data-tab="config"><span class="ni-icon">&#9881;</span><span class="ni-label">config</span></button>
-  <button class="ni" data-tab="favorites"><span class="ni-icon">&#9733;</span><span class="ni-label">favorites</span></button>
-  <button class="ni" data-tab="stats"><span class="ni-icon">&#9636;</span><span class="ni-label">stats</span></button>
-  <div id="sidebar-bottom"><button id="help-btn" title="help / tutorial">?</button></div>
-</div>
-<div id="content">
+  <div id="sidebar" class="">
+    <button id="stoggle"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect y="2" width="14" height="1.4" rx="0.7" fill="currentColor"/><rect y="6.3" width="14" height="1.4" rx="0.7" fill="currentColor"/><rect y="10.6" width="14" height="1.4" rx="0.7" fill="currentColor"/></svg></button>
+    <button class="ni active" data-tab="game">    <span class="ni-icon">&#9000;</span> <span class="ni-label">game</span></button>
+    <button class="ni"        data-tab="modes">   <span class="ni-icon">&#9654;</span> <span class="ni-label">modes</span></button>
+    <button class="ni"        data-tab="lookup">  <span class="ni-icon">&#128269;</span><span class="ni-label">lookup</span></button>
+    <button class="ni"        data-tab="config">  <span class="ni-icon">&#9881;</span> <span class="ni-label">config</span></button>
+    <button class="ni"        data-tab="favorites"><span class="ni-icon">&#9733;</span> <span class="ni-label">favorites</span></button>
+    <button class="ni"        data-tab="wordlists"><span class="ni-icon">&#128196;</span> <span class="ni-label">wordlists</span></button>
+    <button class="ni"        data-tab="stats">   <span class="ni-icon">&#9636;</span> <span class="ni-label">stats</span></button>
+    <div id="sidebar-bottom"><button id="help-btn" title="help / tutorial">?</button></div>
+  </div>
 
-  <div class="tab active" id="tab-game">
-    <div id="hud">
-      <div class="sc"><div class="sc-l">timer</div><div class="sc-v" id="timer">0s</div></div>
-      <div class="sc"><div class="sc-l">difficulty</div><div class="sc-v" id="difficulty">—</div></div>
-      <div class="sc"><div class="sc-l">score</div><div class="sc-v" id="score">0</div></div>
-    </div>
-    <div id="practice-badge">mode</div>
-    <div id="prompt-area">
-      <div id="star-btns">
-        <button id="fav-btn" class="off" title="favorite">&#9733;</button>
-        <button id="pri-btn" class="off" title="mark as priority">&#10022;</button>
+  <div id="content">
+
+    <!-- GAME -->
+    <div class="tab active" id="tab-game">
+      <div id="hud">
+        <div class="sc"><div class="sc-l">timer</div>     <div class="sc-v" id="timer">0s</div></div>
+        <div class="sc"><div class="sc-l">difficulty</div><div class="sc-v" id="difficulty">—</div></div>
+        <div class="sc"><div class="sc-l">score</div>     <div class="sc-v" id="score">0</div></div>
       </div>
-      <div id="prompt-label">find a word containing</div>
-      <div id="prompt-word">...</div>
+      <div id="practice-badge">mode</div>
+      <div id="prompt-area">
+        <div id="star-btns">
+          <button id="fav-btn" class="off" title="favorite">&#9733;</button>
+          <button id="pri-btn" class="off" title="mark as priority">&#10022;</button>
+        </div>
+        <div id="prompt-label">find a word containing</div>
+        <div id="prompt-word">...</div>
+      </div>
+      <div id="preview"></div>
+      <input id="input-box" class="ti" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="type a word…" style="text-align:center;font-family:monospace;font-size:17px;">
+      <div id="regen-bar" style="display:none;margin:1rem 0;">
+        <div id="regen-letters" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;"></div>
+      </div>
+      <div id="msg"></div>
+      <div id="hint"><kbd>Enter</kbd> on empty → auto-solve &nbsp;·&nbsp; <kbd>^</kbd> → auto-solve</div>
     </div>
-    <div id="preview"></div>
-    <input id="input-box" class="ti" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="type a word…" style="text-align:center;font-family:monospace;font-size:17px;" />
-    <div id="msg"></div>
-    <div id="hint"><kbd>Enter</kbd> on empty → auto-solve &nbsp;·&nbsp; <kbd>^</kbd> → auto-solve</div>
-  </div>
 
-  <div class="tab" id="tab-modes">
-    <div class="slab">select a mode</div>
-    <div class="mode-card active-mode" id="mode-normal">
-      <div class="mode-badge badge-normal">normal</div>
-      <div class="mode-title">normal practice</div>
-      <div class="mode-desc">Random prompts filtered by your configured solve rate range.</div>
+    <!-- MODES -->
+    <div class="tab" id="tab-modes">
+      <div class="slab">select a mode</div>
+      <div class="mode-card active-mode" id="mode-normal">
+        <div class="mode-badge badge-normal">normal</div>
+        <div class="mode-title">normal practice</div>
+        <div class="mode-desc">Random prompts within your configured solve rate range.</div>
+      </div>
+      <div class="mode-card" id="mode-all">
+        <div class="mode-badge badge-all">all prompts</div>
+        <div class="mode-title">all prompts — sequential</div>
+        <div class="mode-desc">All prompts within your difficulty range, hardest first. Complete coverage practice.</div>
+      </div>
+      <div class="mode-card" id="mode-fav-rand">
+        <div class="mode-badge badge-favs">favorites</div>
+        <div class="mode-title">favorites — random</div>
+        <div class="mode-desc">Starred prompts shuffled. Priority (✦) prompts appear 3× more.</div>
+      </div>
+      <div class="mode-card" id="mode-fav-seq">
+        <div class="mode-badge badge-favs">favorites</div>
+        <div class="mode-title">favorites — sequential</div>
+        <div class="mode-desc">Starred prompts alphabetically, one by one.</div>
+      </div>
+      <div class="mode-card" id="mode-priority">
+        <div class="mode-badge badge-priority">priority only</div>
+        <div class="mode-title">priority prompts only</div>
+        <div class="mode-desc">Exclusively drills ✦ prompts. For focused cramming.</div>
+      </div>
+      <div class="mode-card struggle" id="mode-struggle">
+        <div class="mode-badge badge-struggle">adaptive</div>
+        <div class="mode-title">struggle mode</div>
+        <div class="mode-desc">Weights prompts you're slow on or frequently auto-solve. Self-adjusts as you improve.</div>
+      </div>
+      <div class="mode-card" id="mode-regen-random">
+        <div class="mode-badge badge-regen">regen</div>
+        <div class="mode-title">regen random letter</div>
+        <div class="mode-desc">Type a word containing the prompt AND a random letter. Letter shown beside prompt.</div>
+      </div>
+      <div class="mode-card" id="mode-regen-regular">
+        <div class="mode-badge badge-regen">regen</div>
+        <div class="mode-title">regen regular</div>
+        <div class="mode-desc">Collect hearts by using letters until all counts reach 0. Score = hearts collected.</div>
+      </div>
+      <div class="mode-card" id="mode-regen-ranked">
+        <div class="mode-badge badge-regen">regen</div>
+        <div class="mode-title">regen ranked</div>
+        <div class="mode-desc">Starts with 3 hearts. Letters count down to 0. Collect hearts by clearing all letters.</div>
+      </div>
+      <div class="mode-card" id="mode-sn">
+        <div class="mode-badge badge-sn">sn</div>
+        <div class="mode-title">sn mode</div>
+        <div class="mode-desc">Exclusively uses prompts with 8 or fewer solutions. Prompts with 8 solutions appear more frequently.</div>
+      </div>
+      <div class="struggle-info" id="struggle-info"></div>
+      <div style="margin-top:1rem;">
+        <button class="btn danger" id="clear-struggle-btn">clear struggle data</button>
+      </div>
     </div>
-    <div class="mode-card" id="mode-all">
-      <div class="mode-badge badge-all">all prompts</div>
-      <div class="mode-title">all prompts — sequential</div>
-      <div class="mode-desc">Cycle through every prompt, sorted hardest first. Full coverage drill.</div>
-    </div>
-    <div class="mode-card" id="mode-fav-rand">
-      <div class="mode-badge badge-favs">favorites</div>
-      <div class="mode-title">favorites — random</div>
-      <div class="mode-desc">Practice favorited prompts in random order. Priority prompts appear 3× more.</div>
-    </div>
-    <div class="mode-card" id="mode-fav-seq">
-      <div class="mode-badge badge-favs">favorites</div>
-      <div class="mode-title">favorites — sequential</div>
-      <div class="mode-desc">Cycle through favorited prompts alphabetically, one by one.</div>
-    </div>
-    <div class="mode-card" id="mode-priority">
-      <div class="mode-badge badge-priority">priority only</div>
-      <div class="mode-title">priority prompts only</div>
-      <div class="mode-desc">Exclusively drill prompts you've marked with the ✦ priority star.</div>
-    </div>
-    <div class="mode-card struggle" id="mode-struggle">
-      <div class="mode-badge badge-struggle">adaptive</div>
-      <div class="mode-title">struggle mode</div>
-      <div class="mode-desc">Tracks your response times and auto-solve rate per prompt. Weights the ones you struggle with more heavily.</div>
-    </div>
-    <div class="struggle-info" id="struggle-info"></div>
-  </div>
 
-  <div class="tab" id="tab-lookup">
-    <div id="lookup-row">
-      <input id="lookup-inp" type="text" maxlength="5" placeholder="STR" autocomplete="off" autocorrect="off" spellcheck="false" />
-      <button class="btn" id="lookup-btn">search</button>
+    <!-- LOOKUP -->
+    <div class="tab" id="tab-lookup">
+      <div id="lookup-row">
+        <input id="lookup-inp" type="text" maxlength="5" placeholder="STR" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="btn" id="lookup-btn">search</button>
+      </div>
+      <div id="lookup-res"></div>
+      <div id="word-list"></div>
+      <div class="slab" style="margin-top:1.1rem;">word → prompts breakdown</div>
+      <div id="word-breakdown-row">
+        <input id="word-breakdown-inp" type="text" placeholder="STREET" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="btn" id="breakdown-btn">check</button>
+      </div>
+      <div id="breakdown-list"></div>
     </div>
-    <div id="lookup-res"></div>
-    <div id="word-list"></div>
-    <div class="slab" style="margin-top:1.1rem;">word → prompts breakdown</div>
-    <div id="word-breakdown-row">
-      <input id="word-breakdown-inp" type="text" placeholder="STREET" autocomplete="off" autocorrect="off" spellcheck="false" />
-      <button class="btn" id="breakdown-btn">check</button>
-    </div>
-    <div id="breakdown-list"></div>
-  </div>
 
-  <div class="tab" id="tab-config">
-    <div class="slab">solve rate filter</div>
-    <div class="cfg-row">
-      <span class="cfg-lbl">min</span>
-      <input class="cfg-inp" id="cfg-min" type="text" value="0"/>
-      <span class="cfg-note">0 – 100%</span>
+    <!-- CONFIG -->
+    <div class="tab" id="tab-config">
+      <div class="slab">solve rate filter</div>
+      <div class="cfg-row"><span class="cfg-lbl">min</span><input class="cfg-inp" id="cfg-min" type="text" value="0"><span class="cfg-note">0 – 100%</span></div>
+      <div class="cfg-row"><span class="cfg-lbl">max</span><input class="cfg-inp" id="cfg-max" type="text" value="100"><span class="cfg-note">0 – 100%</span></div>
+      <div class="slab">solve sort</div>
+      <select id="cfg-sort" style="width:100%;font-size:14px;padding:0.5rem 0.75rem;border-radius:8px;border:0.5px solid var(--t-brd2);background:var(--t-inp-bg);color:var(--t-txt);outline:none;margin-bottom:0.25rem;">
+        <option value="random">random</option>
+        <option value="alphabetical">alphabetical</option>
+        <option value="lengthasc">length — shortest first</option>
+        <option value="lengthdesc">length — longest first</option>
+        <option value="rare">rare letters first</option>
+        <option value="hypo">hyphenated / apostrophe first</option>
+      </select>
+      <div class="slab">prompt length weights (random modes only)</div>
+      <div class="cfg-row"><span class="cfg-lbl">enable weights</span><label class="toggle-switch"><input type="checkbox" id="cfg-weights-enabled" checked><span class="toggle-slider"></span></label><span class="cfg-note">toggle 2/3 letter weighting</span></div>
+      <div class="cfg-row"><span class="cfg-lbl">2-letter</span><input class="cfg-slider" id="cfg-weight-2" type="range" min="0" max="1" step="0.1" value="0.5"><span class="cfg-note" id="weight-2-value">0.5</span></div>
+      <div class="cfg-row"><span class="cfg-lbl">3-letter</span><input class="cfg-slider" id="cfg-weight-3" type="range" min="0" max="1" step="0.1" value="0.5"><span class="cfg-note" id="weight-3-value">0.5</span></div>
+      <div class="slab">theme</div>
+      <div class="theme-grid" id="theme-grid"></div>
     </div>
-    <div class="cfg-row">
-      <span class="cfg-lbl">max</span>
-      <input class="cfg-inp" id="cfg-max" type="text" value="100"/>
-      <span class="cfg-note">0 – 100%</span>
-    </div>
-    <div class="slab">solve sort</div>
-    <select id="cfg-sort" style="width:100%;font-size:14px;padding:0.5rem 0.75rem;border-radius:8px;border:0.5px solid var(--t-brd2);background:var(--t-inp-bg);color:var(--t-txt);outline:none;margin-bottom:0.25rem;">
-      <option value="random">random</option>
-      <option value="alphabetical">alphabetical</option>
-      <option value="lengthasc">length — shortest first</option>
-      <option value="lengthdesc">length — longest first</option>
-      <option value="rare">rare letters first</option>
-      <option value="hypo">hyphenated / apostrophe first</option>
-    </select>
-    <div class="slab">theme</div>
-    <div class="theme-grid" id="theme-grid"></div>
-  </div>
 
-  <div class="tab" id="tab-favorites">
-    <div class="slab">favorited prompts</div>
-    <div id="fav-list"><span style="font-size:13px;color:var(--t-txt3);">star a prompt during the game to save it here</span></div>
-    <div class="slab" style="margin-top:1.25rem;">quick practice</div>
-    <div class="io-row">
-      <button class="btn acc" id="fav-practice-btn">&#9733; random</button>
-      <button class="btn acc" id="fav-practice-seq-btn">&#8652; sequential</button>
+    <!-- FAVORITES -->
+    <div class="tab" id="tab-favorites">
+      <div class="slab">favorited prompts</div>
+      <div id="fav-list"><span style="font-size:13px;color:var(--t-txt3);">star a prompt during the game to save it here</span></div>
+      <div class="slab" style="margin-top:1.25rem;">quick practice</div>
+      <div class="io-row">
+        <button class="btn acc" id="fav-practice-btn">&#9733; random</button>
+        <button class="btn acc" id="fav-practice-seq-btn">&#8652; sequential</button>
+      </div>
+      <div id="fav-practice-msg" style="font-size:12px;color:var(--t-txt3);margin-top:6px;"></div>
+      <div class="slab" style="margin-top:1.25rem;">priority prompts &#10022;</div>
+      <div id="pri-list"><span style="font-size:13px;color:var(--t-txt3);">use the ✦ button on a favorited prompt to mark it as priority</span></div>
+      <div class="slab" style="margin-top:1.25rem;">export / import</div>
+      <div class="io-row">
+        <button class="btn" id="fav-export">export favorites</button>
+        <button class="btn" id="fav-import-btn">import favorites</button>
+        <input type="file" id="fav-import-file" accept=".json" style="display:none;">
+      </div>
+      <div id="fav-io-msg" style="font-size:12px;color:var(--t-txt3);margin-top:4px;"></div>
     </div>
-    <div id="fav-practice-msg" style="font-size:12px;color:var(--t-txt3);margin-top:6px;"></div>
-    <div class="slab" style="margin-top:1.25rem;">priority prompts &#10022;</div>
-    <div id="pri-list"><span style="font-size:13px;color:var(--t-txt3);">use the ✦ button on a favorited prompt to mark it as priority</span></div>
-    <div class="slab" style="margin-top:1.25rem;">export / import</div>
-    <div class="io-row">
-      <button class="btn" id="fav-export">export favorites</button>
-      <button class="btn" id="fav-import-btn">import favorites</button>
-      <input type="file" id="fav-import-file" accept=".json" style="display:none;">
-    </div>
-    <div id="fav-io-msg" style="font-size:12px;color:var(--t-txt3);margin-top:4px;"></div>
-  </div>
 
-  <div class="tab" id="tab-stats">
-    <div class="stats-grid">
-      <div class="stat-card"><div class="sc-l">total words typed</div><div class="sc-v" id="stat-words">0</div></div>
-      <div class="stat-card"><div class="sc-l">total time played</div><div class="sc-v" id="stat-time">0s</div></div>
+    <!-- WORDLISTS -->
+    <div class="tab" id="tab-wordlists">
+      <div class="slab">word lists</div>
+      <div id="wordlists-grid" class="wordlists-grid"></div>
+      <div style="margin-top:1.25rem;">
+        <button class="btn acc" id="new-wordlist-btn">+ make a new word list</button>
+      </div>
     </div>
-    <div class="slab">export / import progress</div>
-    <div class="io-row">
-      <button class="btn" id="stats-export">export stats</button>
-      <button class="btn" id="stats-import-btn">import stats</button>
-      <input type="file" id="stats-import-file" accept=".json" style="display:none;">
-    </div>
-    <div id="stats-io-msg" style="font-size:12px;color:var(--t-txt3);margin-top:4px;"></div>
-    <div class="slab" style="margin-top:1.25rem;">danger zone</div>
-    <button class="btn danger" id="stats-reset">reset all stats</button>
-  </div>
 
+    <!-- STATS -->
+    <div class="tab" id="tab-stats">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="sc-l">total words typed</div><div class="sc-v" id="stat-words">0</div></div>
+        <div class="stat-card"><div class="sc-l">total time played</div> <div class="sc-v" id="stat-time">0s</div></div>
+      </div>
+      <div class="slab">export / import progress</div>
+      <div class="io-row">
+        <button class="btn" id="stats-export">export stats</button>
+        <button class="btn" id="stats-import-btn">import stats</button>
+        <input type="file" id="stats-import-file" accept=".json" style="display:none;">
+      </div>
+      <div id="stats-io-msg" style="font-size:12px;color:var(--t-txt3);margin-top:4px;"></div>
+      <div class="slab" style="margin-top:1.25rem;">danger zone</div>
+      <button class="btn danger" id="stats-reset">reset all stats</button>
+    </div>
+
+  </div>
 </div>
-</div>
 
+<!-- TUTORIAL OVERLAY — populated by tutorial.js -->
 <div id="tut-overlay">
   <div id="tut-modal">
     <button id="tut-close">&#10005;</button>
     <div id="tut-nav">
       <div id="tut-nav-title">tutorial</div>
-      <button class="tni active" data-page="0">welcome</button>
-      <button class="tni" data-page="1">how to play</button>
-      <button class="tni" data-page="2">about word bomb</button>
-      <button class="tni" data-page="3">modes</button>
-      <button class="tni" data-page="4">favorites &amp; priority</button>
-      <button class="tni" data-page="5">struggle mode</button>
-      <button class="tni" data-page="6">lookup tool</button>
-      <button class="tni" data-page="7">configuration</button>
-      <button class="tni" data-page="8">tips &amp; tricks</button>
     </div>
-    <div id="tut-body">
+    <div id="tut-body"></div>
+  </div>
+</div>
 
-      <div class="tut-page active" data-page="0">
-        <div class="tut-h">welcome to wordbomb practice</div>
-        <div class="tut-p">This tool is a practice companion for the game <b>Word Bomb</b>. It gives you a controlled environment to drill prompts, track your weaknesses, and build the word recall speed you need to compete.</div>
-        <div class="tut-p">Use the sidebar on the left to switch between tabs. Click the <b>?</b> button at the bottom of the sidebar at any time to return here.</div>
-        <div class="tut-tip"><b>New here?</b> Read through the pages in order — they build on each other. If you already know the basics, use the left panel to jump to the section you need.</div>
+<!-- WORDLIST EDIT MODAL -->
+<div id="wordlist-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--t-card-bg);border:0.5px solid var(--t-brd);border-radius:14px;width:min(600px,96vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:1rem 1.5rem;border-bottom:0.5px solid var(--t-brd);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <input id="wordlist-title" type="text" class="ti" style="margin-bottom:0.5rem;" placeholder="Wordlist Title">
+        <textarea id="wordlist-desc" class="ti" rows="2" placeholder="Description (optional)" style="resize:vertical;"></textarea>
       </div>
-
-      <div class="tut-page" data-page="1">
-        <div class="tut-h">how to play</div>
-        <div class="tut-p">Each round shows you a short prompt — 2 to 5 letters. Type any valid English word that <b>contains that prompt as a substring</b>, then press Enter.</div>
-        <div class="tut-tip"><b>Example:</b> Prompt is <span class="tut-key">str</span> → valid answers include <span class="tut-key">street</span>, <span class="tut-key">strong</span>, <span class="tut-key">string</span>, <span class="tut-key">abstract</span>.</div>
-        <div class="tut-p">The prompt text turns <b>green</b> if the prompt is itself a valid dictionary word — meaning you can just type it and submit it directly.</div>
-        <div class="tut-p">As you type, your input is previewed above the text box with the matching portion highlighted in green, so you can confirm the prompt is inside your word in real time.</div>
-        <div class="tut-tip"><b>Shortcuts:</b><br>
-          <span class="tut-key">Enter</span> on empty input → auto-solve (reveals a valid word)<br>
-          <span class="tut-key">^</span> or <span class="tut-key">6</span> → also triggers auto-solve<br>
-          Use these when genuinely stuck, but try not to rely on them — struggle mode will notice.
+      <button id="wordlist-modal-close" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--t-txt2);padding:0.5rem;">&#10005;</button>
+    </div>
+    <div style="padding:1rem 1.5rem;flex:1;overflow-y:auto;">
+      <div class="slab">word list (<span id="word-count">0</span>/500)</div>
+      <textarea id="wordlist-words" class="ti" rows="8" placeholder="Type words here, one per line or separated by spaces" style="font-family:monospace;"></textarea>
+      <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" id="wordlist-import-btn">import from file</button>
+        <input type="file" id="wordlist-import-file" accept=".txt" style="display:none;">
+        <button class="btn" id="wordlist-substring-btn">insert by substring</button>
+      </div>
+      <div id="wordlist-substring-controls" style="display:none;margin-top:1rem;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="wordlist-substring-input" type="text" class="ti" placeholder="substring" style="flex:1;">
+          <button class="btn acc" id="wordlist-substring-add">add words</button>
+          <button class="btn" id="wordlist-substring-cancel">cancel</button>
         </div>
       </div>
-
-      <div class="tut-page" data-page="2">
-        <div class="tut-h">about word bomb</div>
-        <div class="tut-p">Word Bomb is a multiplayer game where all players share the same prompt at once. You have a limited time to type a valid word containing that prompt — if the bomb goes off before you answer, you lose a life.</div>
-        <div class="tut-p">The key skill is <b>instant word recall</b>. When you see "str", a word needs to come to mind in under two seconds. This trainer builds that muscle memory.</div>
-        <div class="tut-tip"><b>How to use this trainer effectively:</b><br>
-          Focus on prompts where you hesitate, auto-solve, or consistently take more than 3–4 seconds. Those are the prompts that will cost you lives in a real match.</div>
-        <div class="tut-p">The <b>difficulty %</b> shown for each prompt is its solve rate — roughly how often players answer it successfully before time runs out. Lower % means harder.</div>
-        <div class="tut-p">Use this trainer to memorise reliable "backup words" — short, common words for each prompt. For example, <span class="tut-key">strength</span> covers <span class="tut-key">str</span>, <span class="tut-key">ren</span>, <span class="tut-key">eng</span>, <span class="tut-key">ngt</span>, and <span class="tut-key">ength</span> all at once.</div>
-      </div>
-
-      <div class="tut-page" data-page="3">
-        <div class="tut-h">practice modes</div>
-        <div class="tut-p">Open the <b>modes</b> tab in the sidebar to choose how you want to practice. Clicking a mode card immediately starts it.</div>
-        <div class="tut-tip"><b>Normal</b> — random prompts filtered by your solve rate range (set in config). Best for general warm-ups.</div>
-        <div class="tut-tip"><b>All prompts — sequential</b> — cycles through every prompt in the game, sorted hardest first. Good for a thorough full-coverage session.</div>
-        <div class="tut-tip"><b>Favorites — random</b> — shuffles your starred prompts. Priority prompts (✦) appear 3× more often.</div>
-        <div class="tut-tip"><b>Favorites — sequential</b> — goes through your starred prompts alphabetically, one by one, without repeating until the full list is done.</div>
-        <div class="tut-tip"><b>Priority only</b> — exclusively drills prompts marked ✦. Great for focused cramming before a session.</div>
-        <div class="tut-tip warn"><b>Struggle mode</b> — tracks your response times and auto-solve usage per prompt, and weights the ones you struggle with more heavily. See the Struggle Mode page for more.</div>
-        <div class="tut-p">You can also start favorites practice quickly from the <b>favorites</b> tab using the quick practice buttons.</div>
-      </div>
-
-      <div class="tut-page" data-page="4">
-        <div class="tut-h">favorites &amp; priority</div>
-        <div class="tut-p">Two star buttons appear in the top-right of the prompt card during the game.</div>
-        <div class="tut-tip"><b>★ gold star</b> — favorites this prompt. Saved locally and usable across all favorites practice modes.</div>
-        <div class="tut-tip"><b>✦ pink star</b> — marks a favorited prompt as priority. Only visible once a prompt is already favorited. Priority prompts appear in their own section in the Favorites tab, and get 3× weight in random favorites practice.</div>
-        <div class="tut-p">Use favorites to build a personal list of prompts you need to work on. Use priority for the ones that are actively costing you lives in matches.</div>
-        <div class="tut-p">Favorites and priority data are saved in your browser. Use the <b>export / import</b> buttons in the Favorites tab to back them up or transfer them to another device.</div>
-      </div>
-
-      <div class="tut-page" data-page="5">
-        <div class="tut-h">struggle mode</div>
-        <div class="tut-p">Struggle mode automatically identifies prompts you find difficult based on two signals: <b>how long you take</b> to answer, and <b>how often you auto-solve</b> it.</div>
-        <div class="tut-p">These combine into a struggle score for each prompt. Prompts with higher scores appear more often in the rotation; ones you handle quickly and confidently become rarer.</div>
-        <div class="tut-tip"><b>Recommended flow:</b> Run a normal or all-prompts session first to collect data across the full prompt list. Then switch to struggle mode to automatically focus on your weak spots.</div>
-        <div class="tut-p">The Modes tab shows which prompts are currently weighted highest — these are your struggle zone. As you improve on them, they'll naturally fade out of the rotation.</div>
-        <div class="tut-p">Struggle data persists across sessions and resets when you clear stats.</div>
-      </div>
-
-      <div class="tut-page" data-page="6">
-        <div class="tut-h">lookup tool</div>
-        <div class="tut-p">The <b>lookup</b> tab has two independent tools.</div>
-        <div class="tut-tip"><b>Prompt lookup</b> — type a prompt (e.g. STR) to see its solve rate and every valid word that contains it (up to 222). Words are sorted by your current solve sort setting from config.</div>
-        <div class="tut-tip"><b>Word → prompts breakdown</b> — type any word (e.g. STRENGTH) to see every prompt from the game's prompt list that appears inside it, sorted hardest first. Each entry shows just the prompt and its solve rate %.</div>
-        <div class="tut-p">The breakdown tool is powerful for finding "multi-cover" words — single words that serve as backup answers for several hard prompts at once. This is one of the highest-leverage preparation techniques for Word Bomb.</div>
-      </div>
-
-      <div class="tut-page" data-page="7">
-        <div class="tut-h">configuration</div>
-        <div class="tut-p">Open the <b>config</b> tab to adjust game behaviour.</div>
-        <div class="tut-tip"><b>Solve rate filter</b> — sets which prompts appear in normal mode. Min 0 / Max 50 = only hard prompts. Min 60 / Max 100 = warm-up on easier ones. Has no effect on favorites or all-prompts modes.</div>
-        <div class="tut-tip"><b>Solve sort</b> — controls the word order when auto-solve reveals an answer. "Random" shows variety. "Shortest first" shows easy-to-remember words. "Rare letters first" shows uncommon words useful for Word Bomb bonus rounds.</div>
-        <div class="tut-tip"><b>Theme</b> — 8 visual themes available. Your choice is remembered between visits.</div>
-      </div>
-
-      <div class="tut-page" data-page="8">
-        <div class="tut-h">tips &amp; tricks</div>
-        <div class="tut-tip"><b>Build one solid backup word per prompt.</b> You don't need ten options — just one word you can always recall under pressure. Reliability beats variety.</div>
-        <div class="tut-tip"><b>Use the breakdown tool on long words.</b> Words like UNCLEANLINESS, STRAIGHTFORWARD, and STRENGTHENING cover huge numbers of prompts. Find these and memorise them.</div>
-        <div class="tut-tip"><b>Speed matters more than variety.</b> A fast ordinary answer beats a slow perfect one in Word Bomb. Practice until your backup words come out in under a second.</div>
-        <div class="tut-tip"><b>Watch your timer.</b> The timer resets each prompt. If you're consistently hitting 4+ seconds, star the prompt and drill it in priority mode.</div>
-        <div class="tut-tip"><b>Don't over-use auto-solve.</b> It's a crutch. Struggle mode will flag prompts where you auto-solve often and keep them in heavy rotation until you can answer them independently.</div>
-        <div class="tut-tip"><b>Use sequential mode for coverage.</b> Before a serious ranked session, run all-prompts sequential at speed to make sure you have at least one answer ready for every possible prompt.</div>
-      </div>
-
+    </div>
+    <div style="padding:1rem 1.5rem;border-top:0.5px solid var(--t-brd);display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" id="wordlist-cancel">cancel</button>
+      <button class="btn acc" id="wordlist-save">save wordlist</button>
     </div>
   </div>
 </div>
 
-<script type="module">
-const THEMES={
-  light:{label:"light",bg:"#ffffff",bg2:"#f5f5f4",bg3:"#eeede8",txt:"#1a1a1a",txt2:"#666",txt3:"#aaa",brd:"rgba(0,0,0,0.11)",brd2:"rgba(0,0,0,0.2)",acc:"#1D9E75",acc2:"rgba(29,158,117,0.13)",err:"#E24B4A",fav:"#BA7517",inp:"#ffffff",card:"#ffffff"},
-  dark:{label:"dark",bg:"#1a1a1a",bg2:"#242424",bg3:"#2e2e2e",txt:"#e8e8e8",txt2:"#999",txt3:"#555",brd:"rgba(255,255,255,0.1)",brd2:"rgba(255,255,255,0.18)",acc:"#1D9E75",acc2:"rgba(29,158,117,0.18)",err:"#E24B4A",fav:"#EF9F27",inp:"#242424",card:"#1f1f1f"},
-  hacker:{label:"hacker",bg:"#0d0d0d",bg2:"#111",bg3:"#161616",txt:"#00ff41",txt2:"#00cc33",txt3:"#006618",brd:"rgba(0,255,65,0.15)",brd2:"rgba(0,255,65,0.3)",acc:"#00ff41",acc2:"rgba(0,255,65,0.1)",err:"#ff3333",fav:"#ffff00",inp:"#111",card:"#111"},
-  pink:{label:"pink",bg:"#fff0f5",bg2:"#ffe4ee",bg3:"#ffd6e5",txt:"#4b1528",txt2:"#993556",txt3:"#d4537e",brd:"rgba(212,83,126,0.15)",brd2:"rgba(212,83,126,0.3)",acc:"#D4537E",acc2:"rgba(212,83,126,0.12)",err:"#a32d2d",fav:"#BA7517",inp:"#fff0f5",card:"#fff8fb"},
-  blue:{label:"blue",bg:"#f0f5ff",bg2:"#e0eafa",bg3:"#ccddf7",txt:"#042C53",txt2:"#185FA5",txt3:"#378ADD",brd:"rgba(55,138,221,0.15)",brd2:"rgba(55,138,221,0.3)",acc:"#185FA5",acc2:"rgba(24,95,165,0.12)",err:"#E24B4A",fav:"#BA7517",inp:"#f0f5ff",card:"#f8fbff"},
-  crimson:{label:"crimson",bg:"#1a0505",bg2:"#240808",bg3:"#2e0a0a",txt:"#ffcccc",txt2:"#ff6666",txt3:"#882222",brd:"rgba(255,80,80,0.15)",brd2:"rgba(255,80,80,0.28)",acc:"#E24B4A",acc2:"rgba(226,75,74,0.15)",err:"#ff9999",fav:"#ffcc44",inp:"#240808",card:"#200707"},
-  amber:{label:"amber",bg:"#1a1200",bg2:"#221800",bg3:"#2e2100",txt:"#fff8e0",txt2:"#EF9F27",txt3:"#854F0B",brd:"rgba(239,159,39,0.15)",brd2:"rgba(239,159,39,0.28)",acc:"#EF9F27",acc2:"rgba(239,159,39,0.15)",err:"#E24B4A",fav:"#EF9F27",inp:"#221800",card:"#1e1500"},
-  mint:{label:"mint",bg:"#f0fff8",bg2:"#e0f7ef",bg3:"#c5f0e0",txt:"#04342C",txt2:"#0F6E56",txt3:"#1D9E75",brd:"rgba(29,158,117,0.15)",brd2:"rgba(29,158,117,0.28)",acc:"#0F6E56",acc2:"rgba(15,110,86,0.12)",err:"#E24B4A",fav:"#BA7517",inp:"#f0fff8",card:"#f8fffb"},
-};
-
-function applyTheme(name){
-  const t=THEMES[name]||THEMES.light;
-  const r=document.documentElement.style;
-  r.setProperty("--t-bg",t.bg);r.setProperty("--t-bg2",t.bg2);r.setProperty("--t-bg3",t.bg3);
-  r.setProperty("--t-txt",t.txt);r.setProperty("--t-txt2",t.txt2);r.setProperty("--t-txt3",t.txt3);
-  r.setProperty("--t-brd",t.brd);r.setProperty("--t-brd2",t.brd2);
-  r.setProperty("--t-acc",t.acc);r.setProperty("--t-acc2",t.acc2);
-  r.setProperty("--t-err",t.err);r.setProperty("--t-fav",t.fav);
-  r.setProperty("--t-inp-bg",t.inp);r.setProperty("--t-card-bg",t.card);
-  document.querySelectorAll(".theme-btn").forEach(b=>b.classList.toggle("active",b.dataset.theme===name));
-  currentTheme=name;
-  try{localStorage.setItem("wb_theme",name);}catch{}
-}
-
-let currentTheme="light";
-const tgrid=document.getElementById("theme-grid");
-Object.entries(THEMES).forEach(([k,t])=>{
-  const btn=document.createElement("button");
-  btn.className="theme-btn";btn.dataset.theme=k;
-  btn.style.cssText=`background:${t.bg};color:${t.txt};border-color:${t.brd2};`;
-  btn.innerHTML=`<div style="width:100%;height:14px;border-radius:4px;background:${t.acc};margin-bottom:4px;"></div>${t.label}`;
-  btn.addEventListener("click",()=>applyTheme(k));
-  tgrid.appendChild(btn);
-});
-try{const saved=localStorage.getItem("wb_theme");applyTheme(saved&&THEMES[saved]?saved:"light");}
-catch{applyTheme("light");}
-
-import PROMPTS_RAW from "./prompts.js"
-const PROMPTS_LIST=Object.entries(PROMPTS_RAW);
-
-const LETTER_WEIGHTS={q:2,j:2,z:1,x:1.5,k:0.6,v:0.35,w:0.25,y:0.05,g:0.05,f:0.05};
-const HYPO_WEIGHTS={"-":1,"'":3};
-function rareScore(w){let s=0;for(const c of w)s+=(LETTER_WEIGHTS[c]||0);return s;}
-function hypoScore(w){let s=0;for(const c of w)s+=(HYPO_WEIGHTS[c]||0);return s;}
-
-import WORDS from "./words.js"
-const WORD_SET=new Set(WORDS);
-
-function sortWords(arr,type){
-  const a=[...arr],s=type||"random";
-  if(s==="random"||s==="default"){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
-  else if(s==="alphabetical"){a.sort((x,y)=>x<y?-1:1);}
-  else if(s==="lengthasc"){a.sort((x,y)=>x.length-y.length);}
-  else if(s==="lengthdesc"){a.sort((x,y)=>y.length-x.length);}
-  else if(s==="rare"){a.sort((x,y)=>rareScore(y)-rareScore(x));}
-  else if(s==="hypo"){a.sort((x,y)=>hypoScore(y)-hypoScore(x));}
-  return a;
-}
-function wordsContaining(p){return WORDS.filter(w=>w.toLowerCase().includes(p.toLowerCase()));}
-function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function hlWord(word,prompt){
-  const w=word.toLowerCase(),p=prompt.toLowerCase(),i=w.indexOf(p);
-  if(i===-1)return esc(word);
-  return esc(word.slice(0,i))+`<span style="color:var(--t-acc);font-weight:500">${esc(word.slice(i,i+p.length))}</span>`+esc(word.slice(i+p.length));
-}
-
-const LS_STATS="wb_stats",LS_FAVS="wb_favs",LS_PRI="wb_priority",LS_STRUGGLE="wb_struggle";
-function loadStats(){try{const d=localStorage.getItem(LS_STATS);return d?JSON.parse(d):{totalWords:0,totalSeconds:0};}catch{return{totalWords:0,totalSeconds:0};}}
-function saveStats(s){try{localStorage.setItem(LS_STATS,JSON.stringify(s));}catch{}}
-function loadFavs(){try{const d=localStorage.getItem(LS_FAVS);return d?new Set(JSON.parse(d)):new Set();}catch{return new Set();}}
-function saveFavs(f){try{localStorage.setItem(LS_FAVS,JSON.stringify([...f]));}catch{}}
-function loadPriority(){try{const d=localStorage.getItem(LS_PRI);return d?new Set(JSON.parse(d)):new Set();}catch{return new Set();}}
-function savePriority(p){try{localStorage.setItem(LS_PRI,JSON.stringify([...p]));}catch{}}
-function loadStruggle(){try{const d=localStorage.getItem(LS_STRUGGLE);return d?JSON.parse(d):{};}catch{return{};}}
-function saveStruggle(){try{localStorage.setItem(LS_STRUGGLE,JSON.stringify(struggleData));}catch{}}
-
-let stats=loadStats();
-let favorites=loadFavs();
-let priority=loadPriority();
-let struggleData=loadStruggle();
-let cfg={min:0,max:100,sort:"random"};
-let promptList=[],promptIndex=0;
-let currentPrompt="",currentDiff=0;
-let startTime=Date.now(),sessionStart=Date.now();
-let score=0;
-let currentMode="normal";
-let practiceQueue=[];
-let autoSolvedThisPrompt=false;
-
-const promptWordEl=document.getElementById("prompt-word");
-const inputEl=document.getElementById("input-box");
-const timerEl=document.getElementById("timer");
-const diffEl=document.getElementById("difficulty");
-const scoreEl=document.getElementById("score");
-const previewEl=document.getElementById("preview");
-const msgEl=document.getElementById("msg");
-const favBtn=document.getElementById("fav-btn");
-const priBtn=document.getElementById("pri-btn");
-const practiceBadge=document.getElementById("practice-badge");
-
-function updateFavBtn(){
-  const on=favorites.has(currentPrompt);
-  favBtn.className=on?"on":"off";
-  favBtn.title=on?"unfavorite this prompt":"favorite this prompt";
-  const pon=priority.has(currentPrompt);
-  priBtn.className=pon?"on":"off";
-  priBtn.title=pon?"remove priority":"mark as priority";
-  priBtn.style.display=on?"":"none";
-}
-
-favBtn.addEventListener("click",()=>{
-  if(favorites.has(currentPrompt)){favorites.delete(currentPrompt);priority.delete(currentPrompt);savePriority(priority);}
-  else favorites.add(currentPrompt);
-  saveFavs(favorites);updateFavBtn();renderFavs();
-});
-priBtn.addEventListener("click",()=>{
-  if(!favorites.has(currentPrompt))return;
-  if(priority.has(currentPrompt))priority.delete(currentPrompt);
-  else priority.add(currentPrompt);
-  savePriority(priority);updateFavBtn();renderFavs();
-});
-
-function generatePromptList(){
-  const valid=PROMPTS_LIST.filter(([k,v])=>v>=cfg.min&&v<=cfg.max);
-  valid.sort((a,b)=>b[1]-a[1]||(a[0].length-b[0].length));
-  promptList=valid;promptIndex=0;
-}
-
-function getStruggleScore(key){
-  const d=struggleData[key];if(!d||!d.count)return 0;
-  const avgTime=d.totalTime/d.count;
-  const autoRate=d.autoSolves/d.count;
-  return Math.max(0,avgTime*0.6+autoRate*20);
-}
-
-function getNextPrompt(){
-  if(currentMode==="all"){
-    if(promptIndex>=promptList.length)generatePromptList();
-    return promptList[promptIndex++];
-  }
-  if(currentMode==="fav-rand"||currentMode==="fav-seq"){
-    if(!practiceQueue.length){
-      const favArr=[...favorites];
-      if(!favArr.length){activateMode("normal");return PROMPTS_LIST[Math.floor(Math.random()*PROMPTS_LIST.length)];}
-      if(currentMode==="fav-seq"){practiceQueue=[...favArr].sort();}
-      else{
-        const priArr=[...priority].filter(p=>favorites.has(p));
-        const weighted=[...favArr];
-        priArr.forEach(p=>{weighted.push(p);weighted.push(p);});
-        for(let i=weighted.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[weighted[i],weighted[j]]=[weighted[j],weighted[i]];}
-        practiceQueue=[...weighted];
-      }
-    }
-    const key=practiceQueue.shift();
-    const diff=PROMPTS_RAW[key]||PROMPTS_RAW[key.toUpperCase()]||PROMPTS_RAW[key.toLowerCase()]||50;
-    return[key,diff];
-  }
-  if(currentMode==="priority"){
-    const priArr=[...priority].filter(p=>favorites.has(p));
-    if(!priArr.length){activateMode("normal");return PROMPTS_LIST[Math.floor(Math.random()*PROMPTS_LIST.length)];}
-    const key=priArr[Math.floor(Math.random()*priArr.length)];
-    const diff=PROMPTS_RAW[key]||PROMPTS_RAW[key.toUpperCase()]||PROMPTS_RAW[key.toLowerCase()]||50;
-    return[key,diff];
-  }
-  if(currentMode==="struggle"){
-    const valid=PROMPTS_LIST.filter(([k,v])=>v>=cfg.min&&v<=cfg.max);
-    const pool=valid.length?valid:PROMPTS_LIST;
-    const weighted=[];
-    pool.forEach(entry=>{
-      const sc=getStruggleScore(entry[0]);
-      const copies=Math.max(1,Math.round(1+sc*0.5));
-      for(let i=0;i<copies;i++)weighted.push(entry);
-    });
-    return weighted[Math.floor(Math.random()*weighted.length)];
-  }
-  const valid=PROMPTS_LIST.filter(([k,v])=>v>=cfg.min&&v<=cfg.max);
-  const pool=valid.length?valid:PROMPTS_LIST;
-  return pool[Math.floor(Math.random()*pool.length)];
-}
-
-function recordPromptData(){
-  if(!currentPrompt)return;
-  const elapsed=Math.floor((Date.now()-startTime)/1000);
-  if(!struggleData[currentPrompt])struggleData[currentPrompt]={count:0,totalTime:0,autoSolves:0};
-  struggleData[currentPrompt].count++;
-  struggleData[currentPrompt].totalTime+=elapsed;
-  if(autoSolvedThisPrompt)struggleData[currentPrompt].autoSolves++;
-  saveStruggle();
-}
-
-function resetPrompt(){
-  recordPromptData();
-  autoSolvedThisPrompt=false;
-  const entry=getNextPrompt();
-  currentPrompt=entry[0];currentDiff=entry[1];
-  startTime=Date.now();
-  const isSelf=WORD_SET.has(currentPrompt.toUpperCase());
-  promptWordEl.textContent=currentPrompt;
-  promptWordEl.style.color=isSelf?"var(--t-acc)":"var(--t-txt)";
-  diffEl.textContent=currentDiff+"%";
-  inputEl.value="";inputEl.className="ti";
-  previewEl.innerHTML="";msgEl.textContent="";
-  updateFavBtn();inputEl.focus();
-}
-
-const MODE_LABELS={
-  normal:null,
-  all:"all prompts — sequential",
-  "fav-rand":"★ favorites — random",
-  "fav-seq":"⇆ favorites — sequential",
-  priority:"✦ priority prompts only",
-  struggle:"⚡ struggle mode",
-};
-
-function activateMode(mode){
-  currentMode=mode;
-  practiceQueue=[];
-  if(mode==="all")generatePromptList();
-  score=0;scoreEl.textContent=0;
-  const label=MODE_LABELS[mode];
-  if(label){practiceBadge.textContent=label;practiceBadge.classList.add("show");}
-  else{practiceBadge.classList.remove("show");}
-  document.querySelectorAll(".mode-card").forEach(c=>c.classList.remove("active-mode"));
-  const card=document.getElementById("mode-"+mode.replace("-","_").replace("-rand","_rand").replace("-seq","_seq"));
-  if(card)card.classList.add("active-mode");
-  document.querySelectorAll(".ni").forEach(b=>b.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.querySelector(".ni[data-tab='game']").classList.add("active");
-  document.getElementById("tab-game").classList.add("active");
-  currentPrompt="";resetPrompt();
-}
-
-const modeMap={
-  "mode-normal":"normal","mode-all":"all",
-  "mode-fav-rand":"fav-rand","mode-fav-seq":"fav-seq",
-  "mode-priority":"priority","mode-struggle":"struggle"
-};
-Object.entries(modeMap).forEach(([id,mode])=>{
-  document.getElementById(id).addEventListener("click",()=>{
-    if(mode==="fav-rand"||mode==="fav-seq"){if(!favorites.size){alert("add some favorites first!");return;}}
-    if(mode==="priority"){if(![...priority].some(p=>favorites.has(p))){alert("mark some prompts as priority first!");return;}}
-    activateMode(mode);
-    if(mode==="struggle")updateStruggleInfo();
-  });
-});
-
-function updateStruggleInfo(){
-  const info=document.getElementById("struggle-info");
-  const entries=PROMPTS_LIST.map(([k])=>({key:k,score:getStruggleScore(k)}))
-    .filter(e=>e.score>0).sort((a,b)=>b.score-a.score).slice(0,10);
-  if(!entries.length){info.textContent="no struggle data yet — play some rounds first.";info.classList.add("show");return;}
-  info.innerHTML="<b style='color:var(--t-txt);font-weight:500'>currently weighted high:</b> "+
-    entries.map(e=>`<span style='font-family:monospace'>${esc(e.key)}</span>`).join(", ");
-  info.classList.add("show");
-}
-
-function startFavPractice(sequential){
-  if(!favorites.size){document.getElementById("fav-practice-msg").textContent="add some favorites first!";return;}
-  activateMode(sequential?"fav-seq":"fav-rand");
-}
-
-document.getElementById("fav-practice-btn").addEventListener("click",()=>startFavPractice(false));
-document.getElementById("fav-practice-seq-btn").addEventListener("click",()=>startFavPractice(true));
-
-function solveForPlayer(){
-  autoSolvedThisPrompt=true;
-  const pool=sortWords(wordsContaining(currentPrompt),cfg.sort);
-  if(!pool.length){msgEl.textContent="no words found";return;}
-  const w=pool[0];
-  inputEl.value=w;inputEl.classList.add("correct");updatePreview(w);
-}
-
-function updatePreview(text){
-  if(!text){previewEl.innerHTML="";return;}
-  const i=text.toLowerCase().indexOf(currentPrompt.toLowerCase());
-  if(i!==-1){
-    previewEl.innerHTML=hlWord(text,currentPrompt);
-    inputEl.classList.add("correct");inputEl.classList.remove("wrong");
-  }else{
-    previewEl.innerHTML=`<span style="color:var(--t-txt3)">${esc(text.toLowerCase())}</span>`;
-    inputEl.classList.remove("correct");
-  }
-}
-
-let solveDebounced=false;
-const ALLOWED=/[^a-zA-Z\-']/g;
-inputEl.addEventListener("input",()=>{
-  const raw=inputEl.value,last=raw.slice(-1);
-  if(last==="^"||last==="6"){if(!solveDebounced)solveForPlayer();solveDebounced=true;setTimeout(()=>solveDebounced=false,300);return;}
-  const f=raw.replace(ALLOWED,"");
-  if(f!==raw)inputEl.value=f;
-  updatePreview(inputEl.value);msgEl.textContent="";
-});
-
-inputEl.addEventListener("keydown",e=>{
-  if(e.key!=="Enter")return;
-  const val=inputEl.value.trim().toLowerCase();
-  if(!val){if(!solveDebounced)solveForPlayer();solveDebounced=true;setTimeout(()=>solveDebounced=false,300);return;}
-  const hasPrompt=val.includes(currentPrompt.toLowerCase());
-  const isWord=WORD_SET.has(val.toUpperCase());
-  if(!hasPrompt){msgEl.textContent=`"${val}" doesn't contain "${currentPrompt}"`;shake();return;}
-  if(!isWord){msgEl.textContent=`"${val}" isn't a valid word`;shake();return;}
-  score++;scoreEl.textContent=score;
-  stats.totalWords++;saveStats(stats);renderStatsQuiet();
-  flashGreen();resetPrompt();
-});
-
-function shake(){
-  inputEl.classList.add("wrong");inputEl.value="";previewEl.innerHTML="";
-  setTimeout(()=>{inputEl.classList.remove("wrong");msgEl.textContent="";},700);
-}
-
-let flashDiv=document.createElement("div");
-flashDiv.style.cssText="position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:999;";
-document.body.appendChild(flashDiv);
-function flashGreen(){
-  flashDiv.style.background="var(--t-acc2)";flashDiv.style.opacity="1";
-  setTimeout(()=>flashDiv.style.opacity="0",220);
-}
-
-setInterval(()=>{timerEl.textContent=Math.floor((Date.now()-startTime)/1000)+"s";},500);
-setInterval(()=>{
-  const base=loadStats().totalSeconds,sess=Math.floor((Date.now()-sessionStart)/1000);
-  document.getElementById("stat-time").textContent=formatTime(base+sess);
-},1000);
-
-function formatTime(s){
-  if(s<60)return s+"s";
-  if(s<3600)return Math.floor(s/60)+"m "+Math.floor(s%60)+"s";
-  return Math.floor(s/3600)+"h "+Math.floor((s%3600)/60)+"m";
-}
-
-function renderStats(){
-  const base=loadStats();
-  document.getElementById("stat-words").textContent=base.totalWords;
-  document.getElementById("stat-time").textContent=formatTime(base.totalSeconds+Math.floor((Date.now()-sessionStart)/1000));
-}
-function renderStatsQuiet(){document.getElementById("stat-words").textContent=loadStats().totalWords;}
-
-function renderFavs(){
-  const el=document.getElementById("fav-list");
-  const priEl=document.getElementById("pri-list");
-  if(!favorites.size){
-    el.innerHTML='<span style="font-size:13px;color:var(--t-txt3);">star a prompt during the game to save it here</span>';
-    priEl.innerHTML='<span style="font-size:13px;color:var(--t-txt3);">use the ✦ button on a favorited prompt to mark it as priority</span>';
-    return;
-  }
-  el.innerHTML="";
-  [...favorites].sort().forEach(p=>{
-    const isPri=priority.has(p);
-    const pill=document.createElement("div");
-    pill.className=isPri?"pri-pill":"fav-pill";
-    pill.innerHTML=`${isPri?"✦ ":""}${esc(p)}<span class="fav-rm">✕</span>`;
-    pill.addEventListener("click",()=>{favorites.delete(p);priority.delete(p);saveFavs(favorites);savePriority(priority);updateFavBtn();renderFavs();});
-    el.appendChild(pill);
-  });
-  priEl.innerHTML="";
-  const priItems=[...priority].filter(p=>favorites.has(p)).sort();
-  if(!priItems.length){priEl.innerHTML='<span style="font-size:13px;color:var(--t-txt3);">no priority prompts yet</span>';return;}
-  priItems.forEach(p=>{
-    const pill=document.createElement("div");pill.className="pri-pill";
-    pill.innerHTML=`✦ ${esc(p)}<span class="fav-rm">✕</span>`;
-    pill.addEventListener("click",()=>{priority.delete(p);savePriority(priority);updateFavBtn();renderFavs();});
-    priEl.appendChild(pill);
-  });
-}
-
-document.getElementById("fav-export").addEventListener("click",()=>{
-  const blob=new Blob([JSON.stringify({favorites:[...favorites],priority:[...priority]},null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="wordbomb_favorites.json";a.click();
-  tmp("fav-io-msg","exported!");
-});
-document.getElementById("fav-import-btn").addEventListener("click",()=>document.getElementById("fav-import-file").click());
-document.getElementById("fav-import-file").addEventListener("change",e=>{
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.favorites&&Array.isArray(d.favorites)){d.favorites.forEach(p=>favorites.add(p));saveFavs(favorites);}if(d.priority&&Array.isArray(d.priority)){d.priority.forEach(p=>priority.add(p));savePriority(priority);}renderFavs();updateFavBtn();tmp("fav-io-msg","imported!");}catch{tmp("fav-io-msg","invalid file");}};
-  r.readAsText(file);e.target.value="";
-});
-
-document.getElementById("stats-export").addEventListener("click",()=>{
-  const base=loadStats();
-  const out={totalWords:base.totalWords,totalSeconds:base.totalSeconds+Math.floor((Date.now()-sessionStart)/1000)};
-  const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="wordbomb_stats.json";a.click();
-  tmp("stats-io-msg","exported!");
-});
-document.getElementById("stats-import-btn").addEventListener("click",()=>document.getElementById("stats-import-file").click());
-document.getElementById("stats-import-file").addEventListener("change",e=>{
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(typeof d.totalWords==="number")stats.totalWords=d.totalWords;if(typeof d.totalSeconds==="number")stats.totalSeconds=d.totalSeconds;sessionStart=Date.now();saveStats(stats);renderStats();tmp("stats-io-msg","restored!");}catch{tmp("stats-io-msg","invalid file");}};
-  r.readAsText(file);e.target.value="";
-});
-document.getElementById("stats-reset").addEventListener("click",()=>{
-  if(!confirm("reset all stats?"))return;
-  stats={totalWords:0,totalSeconds:0};struggleData={};
-  sessionStart=Date.now();saveStats(stats);saveStruggle();renderStats();
-});
-
-function tmp(id,msg,t=2200){const el=document.getElementById(id);el.textContent=msg;setTimeout(()=>el.textContent="",t);}
-
-document.getElementById("cfg-min").addEventListener("blur",()=>{
-  let v=parseInt(document.getElementById("cfg-min").value);
-  if(isNaN(v)||v<0)v=0;if(v>cfg.max)v=cfg.max;
-  cfg.min=v;document.getElementById("cfg-min").value=v;generatePromptList();
-});
-document.getElementById("cfg-max").addEventListener("blur",()=>{
-  let v=parseInt(document.getElementById("cfg-max").value);
-  if(isNaN(v)||v>100)v=100;if(v<cfg.min)v=cfg.min;
-  cfg.max=v;document.getElementById("cfg-max").value=v;generatePromptList();
-});
-["cfg-min","cfg-max"].forEach(id=>document.getElementById(id).addEventListener("keydown",e=>{if(e.key==="Enter")e.target.blur();}));
-document.getElementById("cfg-sort").addEventListener("change",e=>{cfg.sort=e.target.value;});
-
-const lookupInp=document.getElementById("lookup-inp");
-lookupInp.addEventListener("input",()=>{lookupInp.value=lookupInp.value.replace(/[^a-zA-Z]/g,"").slice(0,5).toUpperCase();});
-function doLookup(){
-  const raw=lookupInp.value;if(!raw)return;
-  const p=raw.toLowerCase();
-  const solves=sortWords(wordsContaining(p),cfg.sort);
-  const rate=PROMPTS_RAW[raw]!==undefined?PROMPTS_RAW[raw]:PROMPTS_RAW[p]!==undefined?PROMPTS_RAW[p]:undefined;
-  const rateStr=rate!==undefined?rate+"%":"?";
-  document.getElementById("lookup-res").innerHTML=`Solve Rate = <b>${rateStr}</b>, Sub = <b>${solves.length}</b>`;
-  const wl=document.getElementById("word-list");wl.innerHTML="";
-  solves.slice(0,222).forEach(w=>{
-    const pill=document.createElement("div");pill.className="wpill";pill.innerHTML=hlWord(w,p);wl.appendChild(pill);
-  });
-}
-document.getElementById("lookup-btn").addEventListener("click",doLookup);
-lookupInp.addEventListener("keydown",e=>{if(e.key==="Enter")doLookup();});
-
-const bdInp=document.getElementById("word-breakdown-inp");
-bdInp.addEventListener("input",()=>{bdInp.value=bdInp.value.replace(/[^a-zA-Z\-']/g,"").toUpperCase();});
-function doBreakdown(){
-  const word=bdInp.value.toLowerCase();if(!word)return;
-  const container=document.getElementById("breakdown-list");container.innerHTML="";
-  const matches=[];
-  PROMPTS_LIST.forEach(([key,rate])=>{if(word.includes(key.toLowerCase()))matches.push([key,rate]);});
-  matches.sort((a,b)=>a[1]-b[1]);
-  if(!matches.length){container.innerHTML='<span style="font-size:13px;color:var(--t-txt3);">no known prompts found in this word</span>';return;}
-  matches.forEach(([key,rate])=>{
-    const pill=document.createElement("div");pill.className="bpill";
-    pill.innerHTML=`<span style="font-family:monospace;color:var(--t-txt)">${esc(key)}</span><span class="bpill-rate">${rate.toFixed(1)}%</span>`;
-    container.appendChild(pill);
-  });
-}
-document.getElementById("breakdown-btn").addEventListener("click",doBreakdown);
-bdInp.addEventListener("keydown",e=>{if(e.key==="Enter")doBreakdown();});
-
-document.querySelectorAll(".ni").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    document.querySelectorAll(".ni").forEach(b=>b.classList.remove("active"));
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
-    if(btn.dataset.tab==="game")inputEl.focus();
-    if(btn.dataset.tab==="stats")renderStats();
-    if(btn.dataset.tab==="favorites")renderFavs();
-    if(btn.dataset.tab==="modes")updateStruggleInfo();
-  });
-});
-document.getElementById("stoggle").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
-
-const tutOverlay=document.getElementById("tut-overlay");
-document.getElementById("help-btn").addEventListener("click",()=>tutOverlay.classList.add("show"));
-document.getElementById("tut-close").addEventListener("click",()=>tutOverlay.classList.remove("show"));
-tutOverlay.addEventListener("click",e=>{if(e.target===tutOverlay)tutOverlay.classList.remove("show");});
-document.querySelectorAll(".tni").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    document.querySelectorAll(".tni").forEach(b=>b.classList.remove("active"));
-    document.querySelectorAll(".tut-page").forEach(p=>p.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelector(`.tut-page[data-page="${btn.dataset.page}"]`).classList.add("active");
-  });
-});
-
-try{
-  const seen=localStorage.getItem("wb_seen");
-  if(!seen){tutOverlay.classList.add("show");localStorage.setItem("wb_seen","1");}
-}catch{}
-
-generatePromptList();renderStats();renderFavs();resetPrompt();
-</script>
+<!-- CUSTOM POPUP MODAL -->
+<div id="popup-modal">
+  <div>
+    <div>
+      <div id="popup-title"></div>
+      <div id="popup-message"></div>
+    </div>
+    <div>
+      <button id="popup-cancel" class="btn">cancel</button>
+      <button id="popup-ok" class="btn acc">ok</button>
+    </div>
+  </div>
 </div>
+
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
