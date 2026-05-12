@@ -22,7 +22,7 @@ export function createModeHandlers(modeMap, validateModeStart, activateMode, upd
     if (!await CustomConfirm("clear all struggle data?", "Are you sure?")) return;
     
     const { loadStruggle, clearStruggle } = await import("../storage.js");
-    const struggleData = loadStruggle();
+    let struggleData = loadStruggle();
     struggleData = {}; 
     clearStruggle(); 
     updateStruggleInfo();

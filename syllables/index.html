@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syllables Practice</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <h2>Syllables</h2>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Search</h3>
+                <input type="text" id="search-input" placeholder="Search syllables..." class="search-input">
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Filters</h3>
+                
+                <div class="filter-group">
+                    <label>Length</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="filter-2" checked> 2 letters</label>
+                        <label><input type="checkbox" id="filter-3" checked> 3 letters</label>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Solve Rate Range</label>
+                    <div class="range-inputs">
+                        <input type="number" id="min-rate" placeholder="Min %" min="0" max="100">
+                        <span>-</span>
+                        <input type="number" id="max-rate" placeholder="Max %" min="0" max="100">
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Sort By</label>
+                    <select id="sort-select">
+                        <option value="alphabetical">Alphabetical</option>
+                        <option value="solve-rate">Solve Rate</option>
+                    </select>
+                </div>
+                
+                <button id="clear-filters" class="clear-btn">Clear Filters</button>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Bookmarks</h3>
+                <div id="bookmark-count" class="bookmark-count">0 bookmarks</div>
+                <button id="view-bookmarks" class="view-bookmarks-btn" disabled>View Bookmarked Only</button>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main id="content">
+            <header class="content-header">
+                <h1>Syllables Practice</h1>
+                <div class="stats">
+                    <span id="total-count">Loading...</span>
+                    <span id="current-page">Page 1</span>
+                </div>
+            </header>
+            
+            <div class="pagination">
+                <button id="prev-page" disabled>← Previous</button>
+                <div class="page-input-container">
+                    <input type="number" id="page-input" min="1" value="1" class="page-input">
+                    <span id="page-total" class="page-total">of 1</span>
+                </div>
+                <button id="next-page" disabled>Next →</button>
+            </div>
+            
+            <div id="syllables-grid" class="syllables-grid">
+                <!-- Syllables will be displayed here -->
+            </div>
+            
+            <div class="pagination">
+                <button id="prev-page-bottom" disabled>← Previous</button>
+                <div class="page-input-container">
+                    <input type="number" id="page-input-bottom" min="1" value="1" class="page-input">
+                    <span id="page-total-bottom" class="page-total">of 1</span>
+                </div>
+                <button id="next-page-bottom" disabled>Next →</button>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Solutions Modal -->
+    <div id="solutions-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Solutions</h2>
+                <button class="modal-close" onclick="closeSolutionsModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="solutions-list">
+                    <!-- Solutions will be displayed here -->
+                </div>
+                <div class="solutions-pagination">
+                    <button class="prev-solutions" onclick="changeSolutionsPage(-1)">← Previous</button>
+                    <div class="page-input-container">
+                        <input type="number" id="solutions-page-input" min="1" value="1" class="page-input">
+                        <span id="solutions-page-total" class="page-total">of 1</span>
+                    </div>
+                    <button class="next-solutions" onclick="changeSolutionsPage(1)">Next →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="index.js"></script>
+</body>
+</html>
