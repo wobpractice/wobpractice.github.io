@@ -2,7 +2,7 @@ import { saveConfig } from "../storage.js";
 
 export function createConfigHandlers(cfg, generatePromptList) {
   document.getElementById("cfg-min").addEventListener("blur", () => {
-    let v = parseInt(document.getElementById("cfg-min").value);
+    let v = Number(document.getElementById("cfg-min").value);
     if (isNaN(v) || v < 0) v = 0; 
     if (v > cfg.max) v = cfg.max;
     cfg.min = v; 
@@ -12,7 +12,7 @@ export function createConfigHandlers(cfg, generatePromptList) {
   });
 
   document.getElementById("cfg-max").addEventListener("blur", () => {
-    let v = parseInt(document.getElementById("cfg-max").value);
+    let v = Number(document.getElementById("cfg-max").value);
     if (isNaN(v) || v > 100) v = 100; 
     if (v < cfg.min) v = cfg.min;
     cfg.max = v; 
