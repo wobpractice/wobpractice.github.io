@@ -1,6 +1,6 @@
 import { sortWords, wordsContaining, esc, hlWord } from "../utils/index.js";
 
-export function createLookupHandlers(cfg, PROMPTS_RAW) {
+export function createLookupHandlers(cfg, PROMPTS_LIST) {
   const lookupInp = document.getElementById("lookup-inp");
   lookupInp.addEventListener("input", () => { 
     lookupInp.value = lookupInp.value.replace(/[^a-zA-Z]/g, "").slice(0, 5).toUpperCase(); 
