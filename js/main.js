@@ -164,7 +164,7 @@ function setupEventHandlers() {
   createModeHandlers(modeMap, validateModeStart, activateMode, () => updateStruggleInfo(getStruggleScore));
   createFavoritesTabHandlers(activateMode);
   createExportImportHandlers(sessionStart);
-  createLookupHandlers(cfg, wordsContaining, sortWords, {});
+  createLookupHandlers(cfg, PROMPTS_LIST);
   createBreakdownHandlers(PROMPTS_LIST);
   createSidebarHandlers(switchTab);
   
