@@ -11,7 +11,7 @@ export function createLookupHandlers(cfg, PROMPTS_RAW) {
     if (!raw) return;
     const p = raw.toLowerCase();
     const solves = sortWords(wordsContaining(p), cfg.sort);
-    const rate = PROMPTS_RAW[raw] ?? PROMPTS_RAW[p];
+    const rate = PROMPTS_LIST[raw] ?? PROMPTS_LIST[p];
     const rateStr = rate !== undefined ? rate + "%" : "?";
     
     document.getElementById("lookup-res").innerHTML = `Solve Rate = <b>${rateStr}</b>, Sub = <b>${solves.length}</b>`;
