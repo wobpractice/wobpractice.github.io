@@ -200,6 +200,24 @@ body {
     cursor: not-allowed;
 }
 
+.copy-to-main-btn {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.copy-to-main-btn:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
 /* Main Content */
 #content {
     flex: 1;

@@ -67,6 +67,7 @@ function setupEventListeners() {
     
     // Bookmarks
     document.getElementById('view-bookmarks').addEventListener('click', toggleBookmarkedView);
+    document.getElementById('copy-to-main').addEventListener('click', copyToMainFavorites);
     
     // Pagination
     document.getElementById('prev-page').addEventListener('click', () => changePage(-1));
@@ -252,6 +253,33 @@ function updateBookmarkCount() {
     
     count.textContent = `${bookmarks.size} bookmark${bookmarks.size !== 1 ? 's' : ''}`;
     viewBtn.disabled = bookmarks.size === 0;
+}
+
+// Copy syllables bookmarks to main page favorites
+function copyToMainFavorites() {
+    if (bookmarks.size === 0) {
+        alert('No bookmarks to copy!');
+        return;
+    }
+    
+    try {
+        // Get existing main page favorites
+        const mainFavsData = localStorage.getItem('wb_favs');
+        const mainFavs = mainFavsData ? new Set(JSON.parse(mainFavsData)) : new Set();
+        
+        // Add all syllables bookmarks to main favorites
+        bookmarks.forEach(syllable => {
+            mainFavs.add(syllable);
+        });
+        
+        // Save to main page favorites localStorage
+        localStorage.setItem('wb_favs', JSON.stringify([...mainFavs]));
+        
+        alert(`Successfully copied ${bookmarks.size} bookmark${bookmarks.size !== 1 ? 's' : ''} to main page favorites!`);
+    } catch (error) {
+        console.error('Error copying to main favorites:', error);
+        alert('Error copying to main favorites. Please try again.');
+    }
 }
 
 // Change page
