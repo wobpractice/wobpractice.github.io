@@ -1,6 +1,7 @@
 import { PROMPTS_LIST, SN_PROMPTS, sortWords, wordsContaining, REGENMODE_WEIGHTS } from "./utils/index.js";
 import { loadConfig } from "./storage.js";
 
+const solveRateLookup = Object.fromEntries(PROMPTS_LIST);
 let promptList = [], promptIndex = 0;
 let currentMode = "normal";
 
@@ -68,7 +69,7 @@ function getNextFavoritePrompt(mode, favorites, priority) {
   if (mode === "fav-seq") {
     const sorted = [...favArr].sort();
     const key = sorted[Math.floor(Math.random() * sorted.length)];
-    const diff = 50;
+    const diff = solveRateLookup[key];
     return [key, diff];
   } else {
     const priArr = [...priority].filter(p => favorites.has(p));
@@ -79,7 +80,7 @@ function getNextFavoritePrompt(mode, favorites, priority) {
       [weighted[i], weighted[j]] = [weighted[j], weighted[i]]; 
     }
     const key = weighted[Math.floor(Math.random() * weighted.length)];
-    const diff = 50;
+    const diff = solveRateLookup[key];
     return [key, diff];
   }
 }
@@ -89,7 +90,7 @@ function getNextPriorityPrompt(favorites, priority) {
   if (!priArr.length) return null;
   
   const key = priArr[Math.floor(Math.random() * priArr.length)];
-  const diff = 50;
+  const diff = solveRateLookup[key];
   return [key, diff];
 }
 
