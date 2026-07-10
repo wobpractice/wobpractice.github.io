@@ -1,5 +1,6 @@
 // Import data from the main application
 import PROMPTS_RAW from '../data/prompts.js';
+import { SN_PROMPTS as SUB25 } from '../data/sub25.js';
 import WORDS from '../data/words.js';
 
 // Global state
@@ -27,11 +28,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize syllables data
 function initializeData() {
-    allSyllables = Object.entries(PROMPTS_RAW).map(([syllable, rate]) => ({
+    allSyllables = Object.assign(Object.entries(PROMPTS_RAW).map(([syllable, rate]) => ({
         syllable,
         solveRate: rate,
         length: syllable.length
-    }));
+    })), SUB25.map(([syllable, sub]) => ({
+        syllable,
+        solveRate: -sub,
+        length: syllable.length
+    })));
 }
 
 // Load bookmarks from localStorage
