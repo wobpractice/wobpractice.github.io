@@ -65,6 +65,8 @@ function setupEventListeners() {
     document.getElementById('filter-sub24').addEventListener('change', applyFilters);
     document.getElementById('min-rate').addEventListener('input', debounce(applyFilters, 500));
     document.getElementById('max-rate').addEventListener('input', debounce(applyFilters, 500));
+    document.getElementById('min-sub').addEventListener('input', debounce(applyFilters, 500));
+    document.getElementById('max-sub').addEventListener('input', debounce(applyFilters, 500));
     
     // Sort - auto-apply
     document.getElementById('sort-select').addEventListener('change', applyFilters);
@@ -106,8 +108,11 @@ function applyFilters() {
     const include2Letter = document.getElementById('filter-2').checked;
     const include3Letter = document.getElementById('filter-3').checked;
     const includeSub24 = document.getElementById('filter-sub24').checked;
+    document.getElementById('subRange').style.display = includeSub24 ? "block" : "none";
     const minRate = parseFloat(document.getElementById('min-rate').value) || 0;
     const maxRate = parseFloat(document.getElementById('max-rate').value) || 100;
+    const minSub = parseFloat(document.getElementById('min-sub').value) || 1;
+    const maxSub = parseFloat(document.getElementById('max-sub').value) || 24;
     const sortBy = document.getElementById('sort-select').value;
     
     // Start with all syllables or bookmarked only
@@ -131,7 +136,7 @@ function applyFilters() {
     
     // Apply solve rate range filter
     filteredSyllables = filteredSyllables.filter(s => 
-        (s.solveRate >= minRate && s.solveRate <= maxRate) || (includeSub24 && s.solveRate < 0) 
+        (s.solveRate >= minRate && s.solveRate <= maxRate) || (includeSub24 && s.solveRate < 0 && Math.abs(s.solveRate) >= minSub && Math.abs(s.solveRate) <= maxSub) 
     );
     
     // Apply sorting
