@@ -28,15 +28,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize syllables data
 function initializeData() {
-    allSyllables = Object.assign(Object.entries(PROMPTS_RAW).map(([syllable, rate]) => ({
+    allSyllables = Object.entries(PROMPTS_RAW).map(([syllable, rate]) => ({
         syllable,
         solveRate: rate,
         length: syllable.length
-    })), SUB25.map(([syllable, sub]) => ({
+    })).concat(SUB25.map(([syllable, sub]) => ({
         syllable,
         solveRate: -sub,
         length: syllable.length
     })));
+    console.log(allSyllables);
 }
 
 // Load bookmarks from localStorage
@@ -61,6 +62,7 @@ function setupEventListeners() {
     // Filters - auto-apply
     document.getElementById('filter-2').addEventListener('change', applyFilters);
     document.getElementById('filter-3').addEventListener('change', applyFilters);
+    document.getElementById('filter-sub24').addEventListener('change', applyFilters);
     document.getElementById('min-rate').addEventListener('input', debounce(applyFilters, 500));
     document.getElementById('max-rate').addEventListener('input', debounce(applyFilters, 500));
     
@@ -103,6 +105,7 @@ function applyFilters() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
     const include2Letter = document.getElementById('filter-2').checked;
     const include3Letter = document.getElementById('filter-3').checked;
+    const includeSub24 = document.getElementById('filter-sub24').checked;
     const minRate = parseFloat(document.getElementById('min-rate').value) || 0;
     const maxRate = parseFloat(document.getElementById('max-rate').value) || 100;
     const sortBy = document.getElementById('sort-select').value;
@@ -128,14 +131,14 @@ function applyFilters() {
     
     // Apply solve rate range filter
     filteredSyllables = filteredSyllables.filter(s => 
-        s.solveRate >= minRate && s.solveRate <= maxRate
+        (s.solveRate >= minRate && s.solveRate <= maxRate) || (includeSub24 && s.solveRate < 0) 
     );
     
     // Apply sorting
     if (sortBy === 'alphabetical') {
         filteredSyllables.sort((a, b) => a.syllable.localeCompare(b.syllable));
     } else if (sortBy === 'solve-rate') {
-        filteredSyllables.sort((a, b) => b.solveRate - a.solveRate);
+        filteredSyllables.sort((a, b) => Math.abs(b.solveRate) - Math.abs(a.solveRate));
     }
     
     // Reset to first page and display
@@ -149,6 +152,7 @@ function clearFilters() {
     document.getElementById('search-input').value = '';
     document.getElementById('filter-2').checked = true;
     document.getElementById('filter-3').checked = true;
+    document.getElementById('filter-sub24').checked = true;
     document.getElementById('min-rate').value = '';
     document.getElementById('max-rate').value = '';
     document.getElementById('sort-select').value = 'alphabetical';
@@ -202,6 +206,8 @@ function createSyllableCard(syllable) {
     
     const isBookmarked = bookmarks.has(syllable.syllable);
     const isSelfSolve = WORD_SET.has(syllable.syllable.toUpperCase());
+
+    const solveRateText = syllable.solveRate >= 0 ? syllable.solveRate.toFixed(1) + "%" : "sub" + (-syllable.solveRate);
     
     card.innerHTML = `
         <div class="syllable-header">
@@ -213,7 +219,7 @@ function createSyllableCard(syllable) {
         </div>
         <div class="syllable-info">
             <span class="length-badge">${syllable.length}-letter</span>
-            <span class="solve-rate">${syllable.solveRate.toFixed(1)}%</span>
+            <span class="solve-rate">${solveRateText}</span>
         </div>
     `;
     
